@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
             SpecialtySeeder::class,      // 2. Tạo Chuyên khoa
             DoctorSeeder::class,         // 3. Tạo Bác sĩ (cần UserID và SpecialtyID)
             DoctorAvailabilitySeeder::class, // 4. Tạo Slot (cần DoctorID)
+            ServiceSeeder::class,        // 5. Tạo Dịch vụ
         ]);
     }
 }

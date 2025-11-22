@@ -91,7 +91,9 @@ Route::get('/doctors/{id}', [DoctorController::class, 'show']);
 // Lấy lịch trống theo Chuyên khoa
 // URL: GET /api/specialties/{id}/availability
 Route::get('/specialties/{id}/availability', [SpecialtyController::class, 'getAvailability']);
-
+// ... các route public khác ...
+Route::get('/services', [ServiceController::class, 'index']);
+Route::get('/services/{id}', [ServiceController::class, 'show']);
 
 ///===Nhom 3 :cac route cua bac si(dotor) 
 //2 lop bao ve 
@@ -173,7 +175,10 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     Route::get('/users', [UserManagementController::class, 'index']);
     Route::get('/users/{id}', [UserManagementController::class, 'show']);
     Route::put('/users/{id}', [UserManagementController::class, 'update']);
-
+// === DỊCH VỤ ===
+    Route::post('/services', [AdminServiceController::class, 'store']);
+    Route::put('/services/{id}', [AdminServiceController::class, 'update']);
+    Route::delete('/services/{id}', [AdminServiceController::class, 'destroy']);
 //API cho Staff va admin co the dung
     // Yêu cầu 11: Tìm kiếm bệnh nhân khi tạo lịch
     // GET /api/admin/patients (Staff có thể dùng API này)
@@ -187,7 +192,7 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
 
     // 2. Lấy chi tiết 1 Bệnh án
     // URL: GET /api/admin/medical-records/{id}
-    Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
+    Route::get('/medical-records/{id}', [MedicalRecaordController::class, 'show']);
     // (API Tạo/Sửa Patient chúng ta giữ cho Admin)
 });
 

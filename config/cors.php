@@ -22,6 +22,7 @@ return [
     'allowed_origins' => [
     'http://localhost:3000', // Cho phép Next.js (Frontend) gọi
     // (Nếu Frontend của bạn chạy ở cổng khác, hãy điền cổng đó)
+    'http://127.0.0.1:3000', // Thêm cái này cho chắc
 ],
 
     'allowed_origins_patterns' => [],
@@ -32,6 +33,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 ];
