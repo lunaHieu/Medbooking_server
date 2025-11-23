@@ -88,4 +88,39 @@ class UserManagementController extends Controller
             'user' => $user
         ], 200);
     }
+    /**
+     * Admin tạo một User mới (Staff, Admin, hoặc Bệnh nhân).
+     * KHÔNG dùng để tạo Bác sĩ (vì thiếu thông tin chuyên môn).
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'FullName' => 'required|string|max:255',
+            'Username' => 'required|string|max:100|unique:users',
+            'PhoneNumber' => 'required|string|max:15|unique:users',
+            'password' => 'required|string|min:6',
+            'Email' => 'nullable|string|email|max:255|unique:users',
+            'Role' => 'required|string|in:BenhNhan,NhanVien,QuanTriVien', // Không cho tạo BacSi ở đây
+            'Status' => 'required|string|in:HoatDong,Khoa',
+            'Gender' => 'nullable|string',
+            'DateOfBirth' => 'nullable|date',
+        ]);
+
+        // Nếu cố tình tạo Bác sĩ ở đây thì báo lỗi (bắt buộc dùng API Doctors)
+        if ($request->Role === 'BacSi') {
+            return response()->json([
+                'message' => 'Vui lòng dùng chức năng "Quản lý Bác sĩ" để tạo tài khoản Bác sĩ.'
+            ], 422);
+        }
+
+        $user = new User();
+        $user->fill($request->all());
+        $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Tạo tài khoản thành công!',
+            'user' => $user
+        ], 201);
+    }
 }

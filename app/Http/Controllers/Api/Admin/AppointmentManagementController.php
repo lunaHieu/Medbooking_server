@@ -7,13 +7,21 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Specialty;
 use Illuminate\Support\Facades\Storage; // <-- Quan trọng: Để xử lý file ảnh
-
-class SpecialtyController extends Controller
+use App\Models\Appointment;
+class AppointmentManagementController extends Controller
 {
     /**
      * Admin Thêm 1 Chuyên khoa mới.
      * Chạy khi gọi POST /api/admin/specialties
      */
+    public function index()
+    {
+        // Lấy tất cả lịch hẹn kèm thông tin Bệnh nhân và Bác sĩ
+        // 'patient' và 'doctor.user' là tên các relation trong Model Appointment
+        $appointments = Appointment::with(['patient', 'doctor.user', 'service', 'schedule'])->get();
+        
+        return response()->json($appointments);
+    }
     public function store(Request $request)
     {
         $request->validate([

@@ -20,6 +20,8 @@ class FeedbackController extends Controller
         
         return response()->json($feedbacks, 200, [], JSON_UNESCAPED_UNICODE);
     }
-    
+    /**
+     * 
+     */
     // (Chúng ta có thể thêm hàm store, update, destroy ở đây sau)
 }
