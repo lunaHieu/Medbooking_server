@@ -10,6 +10,8 @@ use App\Models\Appointment;          // Cho Model 'Appointment'
 use App\Models\DoctorAvailability; // Cho Model 'DoctorAvailability'
 use Illuminate\Support\Facades\DB;   // Cho 'DB' (Transaction)
 use Illuminate\Support\Facades\Storage;
+use App\Models\Feedback;
+
 class AppointmentController extends Controller
 {
     /**
@@ -326,6 +328,50 @@ class AppointmentController extends Controller
 
         // 2. Trả về chi tiết
         return response()->json($appointment, 200, [], JSON_UNESCAPED_UNICODE);
+    }
+    /**
+     * HÀM MỚI: Bệnh nhân gửi đánh giá sau khi khám
+     */
+    public function submitFeedback(Request $request, $id)
+    {
+        $user = $request->user();
+        $appointment = Appointment::findOrFail($id);
+
+        // 1. Kiểm tra quyền sở hữu
+        if ($user->UserID !== $appointment->PatientID) {
+            return response()->json(['message' => 'Bạn không có quyền đánh giá lịch hẹn này.'], 403);
+        }
+
+        // 2. Chỉ được đánh giá khi đã "Hoàn thành" (Completed)
+        if ($appointment->Status !== 'Completed') {
+            return response()->json(['message' => 'Chỉ có thể đánh giá sau khi đã khám xong.'], 422);
+        }
+
+        // 3. Kiểm tra xem đã đánh giá chưa (tránh spam)
+        $existingFeedback = \App\Models\Feedback::where('AppointmentID', $id)->first();
+        if ($existingFeedback) {
+            return response()->json(['message' => 'Bạn đã đánh giá lịch hẹn này rồi.'], 422);
+        }
+
+        // 4. Validate
+        $request->validate([
+            'Rating' => 'required|integer|min:1|max:5',
+            'Comment' => 'nullable|string|max:500'
+        ]);
+
+        // 5. Lưu Feedback
+        $feedback = new \App\Models\Feedback();
+        $feedback->PatientID = $user->UserID;
+        $feedback->AppointmentID = $id;
+        // Lưu ý: Trong bảng Feedback của bạn có cột TargetType/TargetID (Polymorphic)
+        // Nhưng ở đây ta đơn giản hóa là đánh giá cho Bác sĩ của lịch hẹn đó
+        $feedback->TargetType = 'Doctor'; 
+        $feedback->TargetID = $appointment->DoctorID;
+        $feedback->Rating = $request->Rating;
+        $feedback->Comment = $request->Comment;
+        $feedback->save();
+
+        return response()->json(['message' => 'Gửi đánh giá thành công!', 'feedback' => $feedback], 201);
     }
 
 

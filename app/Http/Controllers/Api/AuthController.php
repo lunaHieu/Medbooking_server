@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
+use Illuminate\Validation\Rule;
 // "Gọi" các công cụ chúng ta cần
 use App\Models\User;            // Model User
 use Illuminate\Support\Facades\Hash;  // Công cụ Băm (Hash) mật khẩu
@@ -148,6 +148,28 @@ class AuthController extends Controller
             'message' => 'Tải ảnh đại diện thành công!',
             'user' => $user
         ], 200);
+    }
+    /**
+     * HÀM MỚI: User tự cập nhật thông tin cá nhân
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'FullName' => 'required|string|max:255',
+            'DateOfBirth' => 'nullable|date',
+            'Gender' => 'nullable|string',
+            'Address' => 'nullable|string',
+            // Validate Email & Phone: Unique nhưng bỏ qua chính mình
+            'Email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('users')->ignore($user->UserID, 'UserID')],
+            'PhoneNumber' => ['required', 'string', \Illuminate\Validation\Rule::unique('users')->ignore($user->UserID, 'UserID')],
+        ]);
+
+        // Cập nhật (chỉ các trường cho phép)
+        $user->update($request->only(['FullName', 'DateOfBirth', 'Gender', 'Address', 'Email', 'PhoneNumber']));
+
+        return response()->json(['message' => 'Cập nhật hồ sơ thành công!', 'user' => $user], 200);
     }
 
 }
