@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\Admin\UserManagementController;
 use App\Http\Controllers\Api\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Api\Admin\FeedbackController;
 use App\Http\Controllers\Api\Admin\NotificationController;
+    
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -204,7 +205,7 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     // 2. Lấy chi tiết 1 Bệnh án
     // URL: GET /api/admin/medical-records/{id}
     Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
-    // (API Tạo/Sửa Patient chúng ta giữ cho Admin)
+    // (API Tạo/Sửa Patient chúng ta giữ cho Admin)q
     // Quản lý Chuyên khoa
 Route::post('/specialties', [AdminSpecialtyController::class, 'store']);
 Route::put('/specialties/{id}', [AdminSpecialtyController::class, 'update']);
