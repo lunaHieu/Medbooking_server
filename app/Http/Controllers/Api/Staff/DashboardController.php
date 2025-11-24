@@ -40,4 +40,18 @@ class DashboardController extends Controller
             'total_doctors_count' => $totalDoctors,
         ], 200);
     }
+
+    public function pendingAppointments()
+{
+    $appointments = Appointment::where('Status', 'Pending')
+        ->with(['doctor', 'user']) // Nếu có quan hệ trong model
+        ->get(['id', 'UserID', 'DoctorID', 'StartTime', 'Status']);
+
+    return response()->json([
+        'pending_appointments' => $appointments,
+    ]);
+}
+
+
+
 }
