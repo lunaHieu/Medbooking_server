@@ -158,7 +158,7 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
 
     // API để Admin xem tất cả Lịch hẹn
     // URL sẽ là: GET /api/admin/appointments
-    Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
+    // Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
 
     //api de admin tai anh len cho bac si
     //// URL sẽ là: POST /api/admin/doctors/{id}/upload-image
