@@ -43,7 +43,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    //Tự gọi bác sĩ của mình
+    Route::get('/my-doctors', [AppointmentController::class, 'getMyDoctors']);
     // Trong nhóm Patient
+    Route::post('/system-feedback', [AppointmentController::class, 'submitSystemFeedback']);
     Route::post('/appointments/{id}/feedback', [AppointmentController::class, 'submitFeedback']);
     // Trong nhóm Patient
     Route::put('/user/profile', [AuthController::class, 'updateProfile']);
@@ -173,7 +176,11 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     // === QUẢN LÝ THÔNG BÁO ===
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/send', [NotificationController::class, 'send']);
+    // Route cho bệnh nhân xem kết quả
+    Route::get('/appointments/{id}/medical-record', [AppointmentController::class, 'getMedicalRecord']);
 
+    // Route cho bác sĩ đặt lịch tái khám
+    Route::post('/doctor/appointments/follow-up', [AppointmentController::class, 'createFollowUp']);
     // === API QUẢN LÝ TÀI KHOẢN (MỚI) ===
     // (Chúng ta dùng 'Resource' để tạo nhanh bộ CRUD)
     // Nó sẽ tự động tạo:

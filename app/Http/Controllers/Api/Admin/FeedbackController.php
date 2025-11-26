@@ -14,10 +14,14 @@ class FeedbackController extends Controller
      */
     public function index()
     {
-        $feedbacks = Feedback::with('patient') // Lấy tên Bệnh nhân
-                                  ->orderBy('created_at', 'desc')
-                                  ->get();
-        
+        $feedbacks = Feedback::with(
+            'patient',
+            'target.user',
+            'appointment.doctor.user'
+        )
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return response()->json($feedbacks, 200, [], JSON_UNESCAPED_UNICODE);
     }
     /**

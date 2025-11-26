@@ -14,8 +14,15 @@ class Appointment extends Model
 
     // Các trường được phép mass assignment
     protected $fillable = [
-        'PatientID', 'DoctorID', 'ServiceID', 'SlotID', 
-        'StartTime', 'Status', 'InitialSymptoms', 'CancellationReason'
+        'PatientID',
+        'DoctorID',
+        'ServiceID',
+        'SlotID',
+        'StartTime',
+        'Status',
+        'InitialSymptoms',
+        'CancellationReason',
+        'Type'
     ];
 
     /**

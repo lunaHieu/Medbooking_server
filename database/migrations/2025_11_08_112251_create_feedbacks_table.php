@@ -5,8 +5,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -20,22 +19,22 @@ return new class extends Migration
             // 1. Liên kết với Bệnh nhân (Người viết đánh giá)
             $table->unsignedBigInteger('PatientID');
             $table->foreign('PatientID')
-                  ->references('UserID')->on('users')
-                  ->onDelete('cascade'); // Xóa feedback nếu bệnh nhân bị xóa
+                ->references('UserID')->on('users')
+                ->onDelete('cascade'); // Xóa feedback nếu bệnh nhân bị xóa
 
             // 2. Liên kết với Lịch khám (Đánh giá này cho lịch khám nào)
-            $table->unsignedBigInteger('AppointmentID');
+            $table->unsignedBigInteger('AppointmentID')->nullable();
             $table->foreign('AppointmentID')
-                  ->references('AppointmentID')->on('appointments')
-                  ->onDelete('cascade'); // Xóa feedback nếu lịch khám bị xóa
+                ->references('AppointmentID')->on('appointments')
+                ->onDelete('cascade'); // Xóa feedback nếu lịch khám bị xóa
 
             // --- Thông tin Đánh giá ---
-            
+
             // Cột này để lưu loại đối tượng: 'Doctor' hay 'Service'
-            $table->string('TargetType', 50); 
+            $table->string('TargetType', 50);
 
             // Cột này để lưu ID của đối tượng: (ví dụ: DoctorID=5, ServiceID=2)
-            $table->unsignedBigInteger('TargetID'); 
+            $table->unsignedBigInteger('TargetID');
 
             $table->integer('Rating'); // Số sao (1-5)
             $table->text('Comment')->nullable(); // NhanXet
