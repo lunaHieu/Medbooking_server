@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use app\Model\Doctor;
 
 // Class 'User' kế thừa từ 'Authenticatable' (để có thể login)
 class User extends Authenticatable
@@ -60,7 +61,7 @@ class User extends Authenticatable
     {
         // "Một User CÓ MỘT Doctor profile, liên kết bằng khóa ngoại 'DoctorID'"
         // (Khóa ngoại 'DoctorID' nằm trên bảng 'doctors')
-        return $this->hasOne(Doctor::class, 'DoctorID');
+       return $this->hasOne(Doctor::class, 'UserID');
     }
 
     /**
