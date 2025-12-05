@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\Doctor;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Doctor;
-use App\Models\Appointment; // ← THÊM DÒNG NÀY LÀ HẾT LỖI 500!!!
+use App\Models\Appointment; 
 
 class DashboardController extends Controller
 {

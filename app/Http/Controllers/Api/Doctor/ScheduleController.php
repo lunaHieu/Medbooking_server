@@ -16,7 +16,7 @@ class ScheduleController extends Controller
             return response()->json(['message' => 'Không tìm thấy hồ sơ bác sĩ'], 404);
         }
 
-        // Lấy lịch khám của bác sĩ (có thể thêm điều kiện ngày nếu cần)
+        // Lấy lịch khám của bác sĩ 
         $appointments = $doctor->appointments()
             ->with(['patient', 'service'])
             ->whereIn('Status', ['Pending', 'Confirmed', 'CheckedIn', 'Completed'])

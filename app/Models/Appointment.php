@@ -44,10 +44,6 @@ class Appointment extends Model
         return $this->belongsTo(Service::class, 'ServiceID', 'ServiceID');
     }
 
-    /**
-     * [QUAN TRỌNG] Đổi tên từ 'slot' thành 'schedule' 
-     * để khớp với câu lệnh with('schedule') trong Controller
-     */
     public function schedule()
     {
         return $this->belongsTo(DoctorAvailability::class, 'SlotID', 'SlotID');

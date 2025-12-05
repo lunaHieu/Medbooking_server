@@ -3,29 +3,16 @@
 
 namespace App\Models;
 
-// Thêm 2 dòng 'use' này để dùng cho API và Xác thực
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use app\Model\Doctor;
 
-// Class 'User' kế thừa từ 'Authenticatable' (để có thể login)
 class User extends Authenticatable
 {
-    // 'HasApiTokens' là của Laravel Sanctum (để tạo API token)
     use HasApiTokens, Notifiable;
 
-    /**
-     * Dòng quan trọng nhất:
-     * Báo cho Laravel biết khóa chính của bảng 'users' là 'UserID',
-     * chứ không phải 'id' (mặc định của Laravel).
-     * Nếu thiếu dòng này, mọi thứ sẽ lỗi!
-     */
     protected $primaryKey = 'UserID';
-    // === THÊM MẢNG (ARRAY) NÀY VÀO ===
-    /**
-     * Các thuộc tính (attributes) có thể được Gán hàng loạt (Mass Assignable).
-     */
+    
     protected $fillable = [
         'FullName',
         'Username',
@@ -34,15 +21,12 @@ class User extends Authenticatable
         'Address',
         'DateOfBirth',
         'Gender',
-        'password', // (Chúng ta hash nó trước, nhưng nó cần ở đây)
+        'password',
         'Role',
         'Status',
         'avatar_url',
     ];
-    /**
-     * Các cột này sẽ bị "che giấu" (không hiển thị)
-     * khi chúng ta trả Model này về dạng API/JSON (để bảo mật).
-     */
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -50,55 +34,114 @@ class User extends Authenticatable
 
     /**
      * === ĐỊNH NGHĨA CÁC MỐI QUAN HỆ (Relationships) ===
-     * Đây là phần "kỳ diệu" của Eloquent
      */
 
-    /**
-     * Mối quan hệ 1-1:
-     * Lấy hồ sơ bác sĩ (Doctor profile) của User này.
-     */
     public function doctorProfile()
     {
-        // "Một User CÓ MỘT Doctor profile, liên kết bằng khóa ngoại 'DoctorID'"
-        // (Khóa ngoại 'DoctorID' nằm trên bảng 'doctors')
-       return $this->hasOne(Doctor::class, 'UserID');
+        return $this->hasOne(Doctor::class, 'UserID', 'UserID');
     }
 
-    /**
-     * Mối quan hệ 1-N (Một-Nhiều):
-     * Lấy tất cả các Lịch khám (Appointments) mà User này đặt (với tư cách Bệnh nhân).
-     */
     public function appointmentsAsPatient()
     {
-        // "Một User CÓ NHIỀU Appointments, liên kết bằng khóa ngoại 'PatientID'"
-        return $this->hasMany(Appointment::class, 'PatientID');
+        return $this->hasMany(Appointment::class, 'PatientID', 'UserID');
     }
 
-    /**
-     * Mối quan hệ 1-N (Một-Nhiều):
-     * Lấy tất cả các Hồ sơ bệnh án (MedicalRecords) của User này.
-     */
     public function medicalRecords()
     {
-        // "Một User CÓ NHIỀU MedicalRecords, liên kết bằng khóa ngoại 'PatientID'"
-        return $this->hasMany(MedicalRecord::class, 'PatientID');
+        return $this->hasMany(MedicalRecord::class, 'PatientID', 'UserID');
     }
 
-    /**
-     * Mối quan hệ 1-N (Một-Nhiều):
-     * Lấy tất cả các Đánh giá (Feedbacks) mà User này đã viết.
-     */
     public function feedbacks()
     {
-        return $this->hasMany(Feedback::class, 'PatientID');
+        return $this->hasMany(Feedback::class, 'PatientID', 'UserID');
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'UserID', 'UserID');
+    }
+
+    // ======== THÊM CÁC QUAN HỆ MỚI ========
+
+    /**
+     * Lấy appointments với tư cách bác sĩ
+     */
+    public function appointmentsAsDoctor()
+    {
+        return $this->hasManyThrough(
+            Appointment::class,
+            Doctor::class,
+            'UserID',       // Foreign key on doctors table
+            'DoctorID',     // Foreign key on appointments table  
+            'UserID',       // Local key on users table
+            'DoctorID'      // Local key on doctors table
+        );
     }
 
     /**
-     * Mối quan hệ 1-N (Một-Nhiều):
-     * Lấy tất cả các Thông báo (Notifications) của User này.
+     * Lấy medical records với tư cách bác sĩ
      */
-    public function notifications()
+    public function medicalRecordsAsDoctor()
     {
-        return $this->hasMany(Notification::class, 'UserID');
+        return $this->hasManyThrough(
+            MedicalRecord::class,
+            Doctor::class,
+            'UserID',       // Foreign key on doctors table
+            'DoctorID',     // Foreign key on medical_records table  
+            'UserID',       // Local key on users table
+            'DoctorID'      // Local key on doctors table
+        );
+    }
+
+    /**
+     * Phương thức hỗ trợ để kiểm tra role
+     */
+    public function isDoctor()
+    {
+        return $this->Role === 'BacSi';
+    }
+
+    public function isPatient()
+    {
+        return $this->Role === 'BenhNhan';
+    }
+
+    public function isAdmin()
+    {
+        return $this->Role === 'QuanTriVien';
+    }
+
+    public function isStaff()
+    {
+        return $this->Role === 'NhanVien';
+    }
+
+    /**
+     * Get the username field for authentication
+     */
+    public function username()
+    {
+        return 'Username';
+    }
+
+    /**
+     * Format user data for API response
+     */
+    public function toApiArray()
+    {
+        return [
+            'UserID' => $this->UserID,
+            'FullName' => $this->FullName,
+            'Email' => $this->Email,
+            'PhoneNumber' => $this->PhoneNumber,
+            'Role' => $this->Role,
+            'Status' => $this->Status,
+            'DateOfBirth' => $this->DateOfBirth,
+            'Gender' => $this->Gender,
+            'Address' => $this->Address,
+            'avatar_url' => $this->avatar_url,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
 }

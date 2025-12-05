@@ -126,3 +126,49 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/availability/{id}', [DoctorAvailabilityController::class, 'staffUpdate']);
     });
 });
+
+Route::prefix('doctor')->group(function () {
+    // Dashboard 
+    Route::get('/dashboard-stats-test', [DoctorDashboardController::class, 'testData']);
+    
+    // Queue  
+    Route::get('/queue-test', [QueueController::class, 'testData']);
+    
+    // Medical Records 
+    Route::get('/my-medical-records-test', function () {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                [
+                    'id' => 1,
+                    'patientName' => "Trần Thị Lan",
+                    'age' => 34,
+                    'diagnosis' => "Viêm họng cấp do virus",
+                    'treatment' => "Kháng sinh 5 ngày, nghỉ ngơi, uống nhiều nước, hạ sốt khi cần",
+                    'prescriptions' => [
+                        ['medicine' => "Amoxicillin", 'dosage' => "500mg", 'frequency' => "3 lần/ngày"],
+                        ['medicine' => "Paracetamol", 'dosage' => "500mg", 'frequency' => "Khi sốt >38.5°C"]
+                    ],
+                    'tests' => ["Xét nghiệm máu", "Ngoáy họng", "CRP"],
+                    'date' => "2025-04-02",
+                    'status' => "completed",
+                ],
+                [
+                    'id' => 2,
+                    'patientName' => "Lê Văn Tùng",
+                    'age' => 45,
+                    'diagnosis' => "Tăng huyết áp độ 2, Rối loạn mỡ máu",
+                    'treatment' => "Điều chỉnh lối sống, thuốc hạ áp, theo dõi định kỳ, ăn kiêng",
+                    'prescriptions' => [
+                        ['medicine' => "Losartan", 'dosage' => "50mg", 'frequency' => "1 lần/ngày"],
+                        ['medicine' => "Amlodipine", 'dosage' => "5mg", 'frequency' => "1 lần/ngày"],
+                        ['medicine' => "Atorvastatin", 'dosage' => "20mg", 'frequency' => "1 lần/ngày"]
+                    ],
+                    'tests' => ["Đo huyết áp 24h", "Xét nghiệm máu", "Điện tâm đồ", "Siêu âm tim"],
+                    'date' => "2025-03-28",
+                    'status' => "completed",
+                ]
+            ]
+        ]);
+    });
+});

@@ -11,7 +11,6 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         
-        // SỬA Ở ĐÂY: dùng ->doctor thay vì ->doctorProfile
         $doctor = $user->doctor;
 
         if (!$doctor) {
@@ -30,4 +29,14 @@ class DashboardController extends Controller
             'waiting_appointments_count' => $waitingAppointments,
         ]);
     }
+
+    public function testData()
+{
+    return response()->json([
+        'total_appointments_count' => 10,
+        'completed_appointments_count' => 5,
+        'waiting_appointments_count' => 3,
+    ]);
+}
+
 }

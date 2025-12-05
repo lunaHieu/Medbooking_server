@@ -1,17 +1,13 @@
 <?php
-// Tên file: app/Http/Controllers/Api/AuthController.php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-// "Gọi" các công cụ chúng ta cần
-use App\Models\User;            // Model User
-use Illuminate\Support\Facades\Hash;  // Công cụ Băm (Hash) mật khẩu
-use Illuminate\Support\Facades\Auth;  // Công cụ Xác thực
-
-use Illuminate\Support\Facedes\Storage;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage; // SỬA: Facedes → Facades
 
 class AuthController extends Controller
 {
@@ -20,138 +16,89 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        // 1. Validate (Kiểm tra) dữ liệu đầu vào
-        // Báo lỗi nếu dữ liệu không hợp lệ
         $request->validate([
             'FullName' => 'required|string|max:255',
-            'Username' => 'required|string|max:100|unique:users', // Phải là duy nhất
-            'PhoneNumber' => 'required|string|max:15|unique:users', // Phải là duy nhất
-            'Email' => 'nullable|string|email|max:255|unique:users', // Phải là email & duy nhất
-            'password' => 'required|string|min:6', // Phải có ít nhất 6 ký tự
+            'Username' => 'required|string|max:100|unique:users',
+            'PhoneNumber' => 'required|string|max:15|unique:users',
+            'Email' => 'nullable|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
         ]);
 
-        // 2. Nếu dữ liệu hợp lệ, tạo User mới
-        $user = new User();
-        $user->FullName = $request->FullName;
-        $user->Username = $request->Username;
-        $user->PhoneNumber = $request->PhoneNumber;
-        $user->Email = $request->Email;
-        
-        // 3. Băm mật khẩu (rất quan trọng!)
-        // KHÔNG BAO GIỜ lưu mật khẩu gốc vào database
-        $user->password = Hash::make($request->password);
-        
-        $user->Role = 'BenhNhan'; // Mặc định khi đăng ký là Bệnh nhân
-        $user->Status = 'HoatDong'; // Mặc định là Hoạt động
-        
-        // 4. Lưu User vào database
-        $user->save();
+        $user = User::create([
+            'FullName' => $request->FullName,
+            'Username' => $request->Username,
+            'PhoneNumber' => $request->PhoneNumber,
+            'Email' => $request->Email,
+            'password' => Hash::make($request->password),
+            'Role' => 'BenhNhan',
+            'Status' => 'HoatDong',
+        ]);
 
-        // 5. Trả về thông báo thành công
+        $token = $user->createToken('api-token')->plainTextToken;
+
         return response()->json([
-            'message' => 'Đăng ký tài khoản thành công!'
-        ], 201); // 201 = Created (Đã tạo thành công)
+            'message' => 'Đăng ký tài khoản thành công!',
+            'user' => $user,
+            'access_token' => $token
+        ], 201);
     }
 
-    /**
-     * Xử lý yêu cầu Đăng nhập (Login).
-     */
     public function login(Request $request)
     {
-        // 1. Validate (Kiểm tra) dữ liệu đầu vào
         $request->validate([
-            'Username' => 'required|string', // Cần Username (hoặc Email/SĐT)
+            'email' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        // 2. Thử xác thực
-        // Chúng ta lấy Username và password từ request
-        $credentials = $request->only('Username', 'password');
+        $user = User::where('Email', $request->email)
+                    ->orWhere('Username', $request->email)
+                    ->first();
 
-        // 3. Dùng "cảnh sát" Auth::attempt để kiểm tra
-        // Auth::attempt sẽ tự động:
-        // - Tìm user có 'Username' = $request->Username
-        // - Hash $request->password
-        // - So sánh với 'password' (đã hash) trong database
-        if (Auth::attempt($credentials)) {
-            // Xác thực thành công!
-            
-            // Lấy thông tin user vừa login
-            $user = $request->user();
-
-            // 4. Tạo "Chìa khóa" (API Token) cho user
-            // Đặt tên token là 'api-token'
-            $token = $user->createToken('api-token')->plainTextToken;
-
-            // 5. Trả về Chìa khóa và Thông tin User
-            return response()->json([
-                'user' => $user,
-                'token' => $token
-            ], 200); // 200 = OK
-
-        } else {
-            // Xác thực thất bại!
-            // 6. Trả về lỗi
-            return response()->json([
-                'message' => 'Tên đăng nhập hoặc mật khẩu không chính xác.'
-            ], 401); // 401 = Unauthorized (Không có quyền)
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Sai tài khoản hoặc mật khẩu'], 401);
         }
+
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đăng nhập thành công',
+            'user' => $user->toApiArray(),
+            'access_token' => $token
+        ], 200);
     }
 
-    /**
-     * Xử lý yêu cầu Đăng xuất (Logout).
-     */
     public function logout(Request $request)
     {
-        //lay thong tin dang nhap cua user
-        $user = $request->user();
+        $request->user()->currentAccessToken()->delete();
 
-        //vo hieu hoa token hien tai
-        $user->currentAccessToken()->delete();
-
-        //tra ve thong bao dang xuat done
         return response()->json([
             'message' => 'Đăng xuất thành công!'
         ], 200);
     }
 
-    /**
-     * HÀM MỚI: User (Bệnh nhân) tải ảnh đại diện.
-     * Chạy khi gọi POST /api/user/upload-avatar
-     */
     public function uploadAvatar(Request $request)
     {
-        // 1. Validate (Kiểm tra) file gửi lên
         $request->validate([
-            // 'avatar' là tên 'Key' chúng ta sẽ dùng trong Postman
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048' // Tối đa 2MB
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        // 2. Lấy user đang đăng nhập
         $user = $request->user();
 
-        // 3. Xóa ảnh cũ (nếu có) để tránh rác
         if ($user->avatar_url) {
             Storage::disk('public')->delete($user->avatar_url);
         }
 
-        // 4. Lưu ảnh mới vào 'storage/app/public/uploads/avatars'
-        // 'store' sẽ tự động tạo tên file ngẫu nhiên, an toàn
         $path = $request->file('avatar')->store('uploads/avatars', 'public');
-
-        // 5. Cập nhật đường dẫn MỚI vào bảng 'users'
         $user->avatar_url = $path;
         $user->save();
 
-        // 6. Trả về thông tin user đã cập nhật
         return response()->json([
             'message' => 'Tải ảnh đại diện thành công!',
             'user' => $user
         ], 200);
     }
-    /**
-     * HÀM MỚI: User tự cập nhật thông tin cá nhân
-     */
+
     public function updateProfile(Request $request)
     {
         $user = $request->user();
@@ -159,17 +106,31 @@ class AuthController extends Controller
         $request->validate([
             'FullName' => 'required|string|max:255',
             'DateOfBirth' => 'nullable|date',
-            'Gender' => 'nullable|string',
+            'Gender' => 'nullable|string|in:Nam,Nu,Khac',
             'Address' => 'nullable|string',
-            // Validate Email & Phone: Unique nhưng bỏ qua chính mình
-            'Email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('users')->ignore($user->UserID, 'UserID')],
-            'PhoneNumber' => ['required', 'string', \Illuminate\Validation\Rule::unique('users')->ignore($user->UserID, 'UserID')],
+            'Email' => ['nullable', 'email', Rule::unique('users')->ignore($user->UserID, 'UserID')],
+            'PhoneNumber' => ['required', 'string', Rule::unique('users')->ignore($user->UserID, 'UserID')],
         ]);
 
-        // Cập nhật (chỉ các trường cho phép)
         $user->update($request->only(['FullName', 'DateOfBirth', 'Gender', 'Address', 'Email', 'PhoneNumber']));
 
-        return response()->json(['message' => 'Cập nhật hồ sơ thành công!', 'user' => $user], 200);
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật hồ sơ thành công!', 
+            'user' => $user
+        ], 200);
     }
 
+    // Thêm hàm testData
+    public function testData()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_appointments_count' => 10,
+                'completed_appointments_count' => 5,
+                'waiting_appointments_count' => 3,
+            ]
+        ]);
+    }
 }
