@@ -123,4 +123,5 @@ class UserManagementController extends Controller
             'user' => $user
         ], 201);
     }
+    
 }

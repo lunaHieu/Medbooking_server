@@ -4,9 +4,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use Illuminate\Http\Request;
 use App\Models\DoctorAvailability;
-// 1. "Gọi" các Model chúng ta cần
+use App\Models\MedicalRecord;
 use App\Models\Doctor;
 use App\Models\User;
 use Carbon\Carbon; // Cho xử lý ngày giờ

@@ -98,7 +98,7 @@ class DoctorAvailabilityController extends Controller
         $slot->delete();
 
         // 204 No Content: Thành công, không cần trả về nội dung
-        return response()->json(null, 204); 
+        return response()->json(null, 204);
     }
     /**
      * HÀM MỚI (Staff): Cập nhật một slot rảnh (thay mặt Bác sĩ).
@@ -133,5 +133,26 @@ class DoctorAvailabilityController extends Controller
             'message' => 'Cập nhật slot thành công!',
             'slot' => $slot
         ], 200); // 200 OK
+    }
+    /**
+     * Xem danh sách Slot rảnh của chính bác sĩ
+     */
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->doctorProfile) {
+            return response()->json(['message' => 'Tài khoản này chưa có thông tin Bác sĩ'], 403);
+        }
+        $doctorId = $user->doctorProfile->DoctorID;
+        $date = $request->query('date');
+        $query = DoctorAvailability::where('DoctorID', $doctorId)
+            ->orderBy('StartTime', 'asc');
+        if ($date) {
+            $query->whereDate('StartTime', $date);
+        } else {
+            $query->where('StartTime', '>=', now());
+        }
+        $slots = $query->get();
+        return response()->json($slots);
     }
 }

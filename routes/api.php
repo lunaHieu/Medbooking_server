@@ -70,6 +70,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // (Chúng ta sẽ dùng AuthController cho tiện)
     Route::post('/user/upload-avatar', [AuthController::class, 'uploadAvatar']);
 
+    //Quản lí gia đình
+    Route::get('user/family-members', [AuthController::class, 'getFamilyMembers']);
+    Route::post('/user/family-members', [AuthController::class, 'addFamilyMembers']);
+    Route::delete('user/family-members/{id}', [AuthController::class, 'removeFamilyMember']);
+    Route::get('/users/search-public', [AuthController::class, 'searchUserPublic']);
 });
 
 // --- CÁC ROUTE KHÔNG BẢO VỆ (Ai cũng có thể gọi được) ---
@@ -146,6 +151,10 @@ Route::middleware(['auth:sanctum', 'role:BacSi'])->prefix('doctor')->group(funct
     // API Bác sĩ Sửa bệnh án
     // URL: PUT /api/doctor/medical-records/{id}
     Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update']);
+    //API cập nhật trạng thái (Bắt đầu khám -> Hoàn tất)
+    Route::put('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
+    //API xem danh sách Slot rảnh của chính bác sĩ đó
+    Route::get('/my-slots', [DoctorAvailabilityController::class, 'index']);
 });
 
 //nhom4 admin
