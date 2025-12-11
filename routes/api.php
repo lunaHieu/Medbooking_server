@@ -46,10 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //Tự gọi bác sĩ của mình
     Route::get('/my-doctors', [AppointmentController::class, 'getMyDoctors']);
     // Trong nhóm Patient
-<<<<<<< HEAD
-=======
     Route::post('/system-feedback', [AppointmentController::class, 'submitSystemFeedback']);
->>>>>>> 0e036fa0f70cbb18cde2aaaa24cf8e08f84a1b95
     Route::post('/appointments/{id}/feedback', [AppointmentController::class, 'submitFeedback']);
     // Trong nhóm Patient
     Route::put('/user/profile', [AuthController::class, 'updateProfile']);
@@ -73,14 +70,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // (Chúng ta sẽ dùng AuthController cho tiện)
     Route::post('/user/upload-avatar', [AuthController::class, 'uploadAvatar']);
 
-<<<<<<< HEAD
-=======
     //Quản lí gia đình
     Route::get('user/family-members', [AuthController::class, 'getFamilyMembers']);
     Route::post('/user/family-members', [AuthController::class, 'addFamilyMembers']);
     Route::delete('user/family-members/{id}', [AuthController::class, 'removeFamilyMember']);
     Route::get('/users/search-public', [AuthController::class, 'searchUserPublic']);
->>>>>>> 0e036fa0f70cbb18cde2aaaa24cf8e08f84a1b95
 });
 
 // --- CÁC ROUTE KHÔNG BẢO VỆ (Ai cũng có thể gọi được) ---
@@ -109,10 +103,6 @@ Route::get('/doctors/{id}', [DoctorController::class, 'show']);
 // URL: GET /api/specialties/{id}/availability
 Route::get('/specialties/{id}/availability', [SpecialtyController::class, 'getAvailability']);
 
-<<<<<<< HEAD
-// ... các route public khác ...
-=======
->>>>>>> 0e036fa0f70cbb18cde2aaaa24cf8e08f84a1b95
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{id}', [ServiceController::class, 'show']);
 Route::get('/specialties/{id}', [SpecialtyController::class, 'show']);

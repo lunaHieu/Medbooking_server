@@ -15,8 +15,8 @@ use Carbon\Carbon;
 class DoctorController extends Controller
 {
     /**
-     * [API 1]: Lấy danh sách Bác sĩ (Tên, Bằng cấp, Mô tả, Chuyên khoa)
-     * Endpoint: GET /api/doctors
+     * Lấy danh sách Bác sĩ (Tên, Bằng cấp, Mô tả, Chuyên khoa)
+     * GET /api/doctors
      */
     public function index(Request $request)
     {
@@ -49,11 +49,11 @@ class DoctorController extends Controller
         // Format lại dữ liệu
         $formattedDoctors = $doctors->map(function ($doctor) {
             return [
-                'DoctorID'    => $doctor->DoctorID,
-                'FullName'    => $doctor->user->FullName ?? 'N/A',
-                'Degree'      => $doctor->Degree,
+                'DoctorID' => $doctor->DoctorID,
+                'FullName' => $doctor->user->FullName ?? 'N/A',
+                'Degree' => $doctor->Degree,
                 'Description' => $doctor->Description,
-                'Specialty'   => $doctor->specialty->SpecialtyName ?? 'Chưa xác định',
+                'Specialty' => $doctor->specialty->SpecialtyName ?? 'Chưa xác định',
             ];
         });
 
@@ -61,8 +61,8 @@ class DoctorController extends Controller
     }
 
     /**
-     * [API 2]: Lấy lịch khám khả dụng của 1 bác sĩ
-     * Endpoint: GET /api/doctors/{id}/availability
+     * Lấy lịch khám khả dụng của 1 bác sĩ
+     * GET /api/doctors/{id}/availability
      */
     public function getAvailability(Request $request, $id)
     {
@@ -83,38 +83,34 @@ class DoctorController extends Controller
         return response()->json($availableSlots, 200, [], JSON_UNESCAPED_UNICODE);
     }
 
-    /* =========================================================
-     *                      CRUD CHO BÁC SĨ
-     * ========================================================= */
-
     /**
-     * [API 3]: Tạo bác sĩ
+     * Tạo bác sĩ
      * POST /api/doctors
      */
     public function store(Request $request)
     {
         $request->validate([
-            'UserID'      => 'required|integer',
+            'UserID' => 'required|integer',
             'SpecialtyID' => 'required|integer',
-            'Degree'      => 'required|string',
+            'Degree' => 'required|string',
             'Description' => 'nullable|string',
         ]);
 
         $doctor = Doctor::create([
-            'UserID'      => $request->UserID,
+            'UserID' => $request->UserID,
             'SpecialtyID' => $request->SpecialtyID,
-            'Degree'      => $request->Degree,
+            'Degree' => $request->Degree,
             'Description' => $request->Description,
         ]);
 
         return response()->json([
             'message' => 'Tạo bác sĩ thành công',
-            'doctor'  => $doctor
+            'doctor' => $doctor
         ], 201);
     }
 
     /**
-     * [API 4]: Lấy chi tiết bác sĩ
+     * Lấy chi tiết bác sĩ
      * GET /api/doctors/{id}
      */
     public function show($id)
@@ -125,7 +121,7 @@ class DoctorController extends Controller
     }
 
     /**
-     * [API 5]: Cập nhật bác sĩ
+     * Cập nhật bác sĩ
      * PUT /api/doctors/{id}
      */
     public function update(Request $request, $id)
@@ -137,20 +133,20 @@ class DoctorController extends Controller
         }
 
         $doctor->update([
-            'UserID'      => $request->UserID ?? $doctor->UserID,
+            'UserID' => $request->UserID ?? $doctor->UserID,
             'SpecialtyID' => $request->SpecialtyID ?? $doctor->SpecialtyID,
-            'Degree'      => $request->Degree ?? $doctor->Degree,
+            'Degree' => $request->Degree ?? $doctor->Degree,
             'Description' => $request->Description ?? $doctor->Description,
         ]);
 
         return response()->json([
             'message' => 'Cập nhật bác sĩ thành công',
-            'doctor'  => $doctor
+            'doctor' => $doctor
         ]);
     }
 
     /**
-     * [API 6]: Xóa bác sĩ
+     * Xóa bác sĩ
      * DELETE /api/doctors/{id}
      */
     public function destroy($id)
