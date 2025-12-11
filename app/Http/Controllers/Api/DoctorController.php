@@ -1,59 +1,153 @@
 <?php
-// Tên file: app/Http/Controllers/Api/DoctorController.php
+// Tên file: app/Http/Controllers/Api/DoctorController.php 
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
-// 1. "Gọi" các Model chúng ta cần
 use App\Models\Doctor;
-use App\Models\User;
-use Carbon\Carbon; // Cho xử lý ngày giờ
+use App\Models\DoctorAvailability;
+use Carbon\Carbon;
+
 class DoctorController extends Controller
 {
     /**
-     * Lấy danh sách TẤT CẢ bác sĩ.
-     * Chạy khi gọi GET /api/doctors
+     * [API 1]: Lấy danh sách Bác sĩ (Tên, Bằng cấp, Mô tả, Chuyên khoa)
+     * Endpoint: GET /api/doctors
      */
-    public function index()
+    public function index(Request $request)
     {
-        // 2. Eager Loading
-        // Lấy TẤT CẢ Doctors, "NHƯNG"
-        // "with('user')": Lấy luôn thông tin 'user' liên quan
-        // "with('specialty')": Lấy luôn thông tin 'specialty' liên quan
-        $doctors = Doctor::with(['user', 'specialty'])->get();
+        $query = Doctor::with([
+            'user:UserID,FullName',
+            'specialty:SpecialtyID,SpecialtyName',
+        ]);
 
-        // 3. Trả về JSON (sửa lỗi tiếng Việt)
-        return response()->json($doctors, 200, [], JSON_UNESCAPED_UNICODE);
+        if ($request->filled('name')) {
+            $search = $request->name;
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('FullName', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('specialty_id')) {
+            $query->where('SpecialtyID', $request->specialty_id);
+        }
+
+        $doctors = $query->get();
+
+        $formattedDoctors = $doctors->map(function ($doctor) {
+            return [
+                'DoctorID'    => $doctor->DoctorID,
+                'FullName'    => $doctor->user->FullName ?? 'N/A',
+                'Degree'      => $doctor->Degree,
+                'Description' => $doctor->Description,
+                'Specialty'   => $doctor->specialty->SpecialtyName ?? 'Chưa xác định',
+            ];
+        });
+
+        return response()->json($formattedDoctors, 200, [], JSON_UNESCAPED_UNICODE);
     }
 
     /**
-     * Lấy danh sách các slot khả dụng của bác sĩ theo ID.
-     * Chạy khi gọi GET /api/doctors/{id}/availability
+     * [API 2]: Lấy lịch khám khả dụng của Bác sĩ theo ID
+     * Endpoint: GET /api/doctors/{id}/availability
      */
-    public function getAvailability($id) //tu lay id tu url
+    public function getAvailability(Request $request, $doctorId)
     {
-        // 3. Lấy các slot, nhưng có 2 ĐIỀU KIỆN LỌC (filter)
-        $availableSlots = Doctor::findOrFail($id) // Tìm Bác sĩ có ID này
-            ->availabilitySlots() // Lấy các slot qua Mối quan hệ
-            ->where('Status', '=', 'Available') // ĐK 1: Chỉ lấy slot "Còn trống"
-            ->where('StartTime', '>', Carbon::now()) // ĐK 2: Chỉ lấy slot trong tương lai
-            ->orderBy('StartTime', 'asc') // Sắp xếp (sớm nhất lên đầu)
+        $slots = DoctorAvailability::where('DoctorID', $doctorId)
+            ->where('Status', 'Available')
+            ->where('StartTime', '>=', Carbon::now()->startOfDay())
+            ->orderBy('StartTime', 'asc')
             ->get();
 
-        // 4. Trả về JSON
-        return response()->json($availableSlots, 200, [], JSON_UNESCAPED_UNICODE);
+        $groupedSlots = $slots->groupBy(function ($item) {
+            return Carbon::parse($item->StartTime)->format('Y-m-d');
+        })->map(function ($daySlots, $date) {
+            $dateObject = Carbon::parse($date);
+
+            return [
+                'date'      => $date,
+                'dayOfWeek' => $dateObject->locale('vi')->dayName,
+                'slots'     => $daySlots->map(function ($slot) {
+                    return [
+                        'SlotID'    => $slot->SlotID,
+                        'StartTime' => Carbon::parse($slot->StartTime)->format('H:i'),
+                    ];
+                })->values(),
+            ];
+        })->values();
+
+        return response()->json($groupedSlots, 200, [], JSON_UNESCAPED_UNICODE);
     }
-    public function show($id)
+
+    /* =========================================================
+     *                  CRUD CHO BÁC SĨ
+     * ========================================================= */
+
+    /**
+     * [API 3]: Tạo bác sĩ
+     * POST /api/doctors
+     */
+    public function store(Request $request)
     {
-        // 1. Dùng findOrFail để tìm bác sĩ có ID này.
-        // Nếu không tìm thấy, tự động trả về lỗi 404 Not Found.
-        $doctor = Doctor::with(['user', 'specialty'])
-                        ->findOrFail($id);
+        $request->validate([
+            'UserID'      => 'required|integer',
+            'SpecialtyID' => 'required|integer',
+            'Degree'      => 'required|string',
+            'Description' => 'nullable|string',
+        ]);
 
-        // 2. Trả về JSON (sửa lỗi tiếng Việt)
-        return response()->json($doctor, 200, [], JSON_UNESCAPED_UNICODE);
+        $doctor = Doctor::create([
+            'UserID'      => $request->UserID,
+            'SpecialtyID' => $request->SpecialtyID,
+            'Degree'      => $request->Degree,
+            'Description' => $request->Description,
+        ]);
+
+        return response()->json([
+            'message' => 'Tạo bác sĩ thành công',
+            'doctor'  => $doctor
+        ], 201);
     }
 
+    /**
+     * [API 4]: Cập nhật bác sĩ
+     * PUT /api/doctors/{id}
+     */
+    public function update(Request $request, $id)
+    {
+        $doctor = Doctor::find($id);
+        if (!$doctor) {
+            return response()->json(['message' => 'Không tìm thấy bác sĩ'], 404);
+        }
+
+        $doctor->update([
+            'UserID'      => $request->UserID ?? $doctor->UserID,
+            'SpecialtyID' => $request->SpecialtyID ?? $doctor->SpecialtyID,
+            'Degree'      => $request->Degree ?? $doctor->Degree,
+            'Description' => $request->Description ?? $doctor->Description,
+        ]);
+
+        return response()->json([
+            'message' => 'Cập nhật bác sĩ thành công',
+            'doctor'  => $doctor
+        ]);
+    }
+
+    /**
+     * [API 5]: Xóa bác sĩ
+     * DELETE /api/doctors/{id}
+     */
+    public function destroy($id)
+    {
+        $doctor = Doctor::find($id);
+
+        if (!$doctor) {
+            return response()->json(['message' => 'Không tìm thấy bác sĩ'], 404);
+        }
+
+        $doctor->delete();
+
+        return response()->json(['message' => 'Xóa bác sĩ thành công']);
+    }
 }

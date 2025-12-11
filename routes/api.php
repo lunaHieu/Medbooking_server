@@ -38,18 +38,18 @@ use App\Http\Controllers\Api\Admin\NotificationController;
 
 //route benh nhan (patient)
 // --- CÁC ROUTE ĐƯỢC BẢO VỆ (Bắt buộc phải có "chìa khóa" - Token) ---
-Route::middleware('auth:sanctum')->group(function(){
+Route::middleware('auth:sanctum')->group(function () {
     //route GET /api/users
-    Route::get('/user',function(Request $request){
+    Route::get('/user', function (Request $request) {
         return $request->user();
     });
     // Trong nhóm Patient
-Route::post('/appointments/{id}/feedback', [AppointmentController::class, 'submitFeedback']);
-// Trong nhóm Patient
-Route::put('/user/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/appointments/{id}/feedback', [AppointmentController::class, 'submitFeedback']);
+    // Trong nhóm Patient
+    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
     //2. the route moi vao day
     //api de lay lich hen cua chinh toi
-    Route::get('/my-appointments',[AppointmentController::class, 'myAppointments']);
+    Route::get('/my-appointments', [AppointmentController::class, 'myAppointments']);
     //sau nay se them route bao ve khac vd: POST /api/appointment vao day
 
     // === THÊM ROUTE MỚI CỦA BẠN VÀO ĐÂY ===
@@ -66,7 +66,7 @@ Route::put('/user/profile', [AuthController::class, 'updateProfile']);
     // API để Bệnh nhân tự tải ảnh đại diện
     // (Chúng ta sẽ dùng AuthController cho tiện)
     Route::post('/user/upload-avatar', [AuthController::class, 'uploadAvatar']);
-    
+
 });
 
 // --- CÁC ROUTE KHÔNG BẢO VỆ (Ai cũng có thể gọi được) ---
@@ -94,6 +94,7 @@ Route::get('/doctors/{id}', [DoctorController::class, 'show']);
 // Lấy lịch trống theo Chuyên khoa
 // URL: GET /api/specialties/{id}/availability
 Route::get('/specialties/{id}/availability', [SpecialtyController::class, 'getAvailability']);
+
 // ... các route public khác ...
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{id}', [ServiceController::class, 'show']);
@@ -103,7 +104,7 @@ Route::get('/specialties/{id}', [SpecialtyController::class, 'show']);
 //1. auth:sanctum
 //2. role:dotor
 Route::middleware(['auth:sanctum', 'role:BacSi'])->prefix('doctor')->group(function () {
-    
+
     // API để Bác sĩ tự tạo lịch trống
     // URL sẽ là: POST /api/doctor/availability
     Route::post('/availability', [App\Http\Controllers\Api\DoctorAvailabilityController::class, 'store']);
@@ -146,11 +147,11 @@ Route::middleware(['auth:sanctum', 'role:BacSi'])->prefix('doctor')->group(funct
 
 //nhom4 admin
 Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin')->group(function () {
-    
+
     // API để Admin tạo Bác sĩ mới
     // URL sẽ là: POST /api/admin/doctors
     Route::post('/doctors', [DoctorManagementController::class, 'store']);
-    
+
 
     //api update bacs si
     Route::put('/doctors/{id}', [DoctorManagementController::class, 'update']);
@@ -168,7 +169,7 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     // API để Admin Xóa Bệnh án
     // URL sẽ là: DELETE /api/admin/medical-records/{id}
     Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy']);
-    
+
     // === QUẢN LÝ THÔNG BÁO ===
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/send', [NotificationController::class, 'send']);
@@ -186,11 +187,11 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     Route::get('/users', [UserManagementController::class, 'index']);
     Route::get('/users/{id}', [UserManagementController::class, 'show']);
     Route::put('/users/{id}', [UserManagementController::class, 'update']);
-// === DỊCH VỤ ===
+    // === DỊCH VỤ ===
     Route::post('/services', [AdminServiceController::class, 'store']);
     Route::put('/services/{id}', [AdminServiceController::class, 'update']);
     Route::delete('/services/{id}', [AdminServiceController::class, 'destroy']);
-//API cho Staff va admin co the dung
+    //API cho Staff va admin co the dung
     // Yêu cầu 11: Tìm kiếm bệnh nhân khi tạo lịch
     // GET /api/admin/patients (Staff có thể dùng API này)
     Route::get('/patients', [PatientController::class, 'index']);
@@ -206,9 +207,9 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
     // (API Tạo/Sửa Patient chúng ta giữ cho Admin)
     // Quản lý Chuyên khoa
-Route::post('/specialties', [AdminSpecialtyController::class, 'store']);
-Route::put('/specialties/{id}', [AdminSpecialtyController::class, 'update']);
-Route::delete('/specialties/{id}', [AdminSpecialtyController::class, 'destroy']);
+    Route::post('/specialties', [AdminSpecialtyController::class, 'store']);
+    Route::put('/specialties/{id}', [AdminSpecialtyController::class, 'update']);
+    Route::delete('/specialties/{id}', [AdminSpecialtyController::class, 'destroy']);
 });
 
 
@@ -216,7 +217,7 @@ Route::delete('/specialties/{id}', [AdminSpecialtyController::class, 'destroy'])
 // Yêu cầu: Đã đăng nhập VÀ (Role là 'NhanVien' HOẶC 'QuanTriVien')
 // (Chúng ta cho cả Admin vào group này để Admin cũng test được)
 Route::middleware(['auth:sanctum', 'role:NhanVien,QuanTriVien'])->prefix('staff')->group(function () {
-    
+
     // Yêu cầu 1: Lấy số liệu thống kê
     // GET /api/staff/dashboard-stats
     Route::get('/dashboard-stats', [StaffDashboardController::class, 'index']);
@@ -246,7 +247,7 @@ Route::middleware(['auth:sanctum', 'role:NhanVien,QuanTriVien'])->prefix('staff'
     // Yêu cầu 7: Cập nhật/sửa thông tin chi tiết lịch hẹn
     // PUT /api/staff/appointments/{id}
     Route::put('/appointments/{id}', [AppointmentController::class, 'staffUpdateAppointment']);
-    
+
     // Yêu cầu 8: Hủy lịch (bonus)
     // PATCH /api/staff/appointments/{id}/cancel
     Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'staffCancelAppointment']);

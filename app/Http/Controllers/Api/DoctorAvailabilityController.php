@@ -134,4 +134,27 @@ class DoctorAvailabilityController extends Controller
             'slot' => $slot
         ], 200); // 200 OK
     }
+    /**
+     * Lấy danh sách các slot còn trống ('Available') cho Bệnh nhân.
+     * Chạy khi gọi GET /api/available-slots?date=...
+     */
+    public function getAvailableSlots(Request $request)
+    {
+        // 1. Validate tham số ngày
+        $request->validate([
+            'date' => 'required|date_format:Y-m-d',
+        ]);
+
+        $targetDate = $request->query('date');
+
+        $slots = \App\Models\DoctorAvailability::where('Status', 'Available')
+            // Chỉ lấy các slot bắt đầu vào ngày được chỉ định
+            ->whereDate('StartTime', $targetDate)
+            ->orderBy('StartTime', 'asc')
+            // Lấy kèm thông tin bác sĩ và chuyên khoa để hiển thị ở frontend
+            ->with('doctor.specialty') 
+            ->get();
+
+        return response()->json($slots, 200, [], JSON_UNESCAPED_UNICODE);
+    }
 }
