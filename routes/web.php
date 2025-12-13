@@ -16,3 +16,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// === THÊM ROUTE LOGIN ĐỂ FIX LỖI ===
+Route::get('/login', function () {
+    return response()->json([
+        'error' => 'Unauthenticated',
+        'message' => 'Please login to access this resource'
+    ], 401);
+})->name('login');

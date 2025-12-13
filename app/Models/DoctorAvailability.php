@@ -10,10 +10,6 @@ class DoctorAvailability extends Model
 {
     use HasFactory;
 
-    /**
-     * Tên bảng. Laravel tự đoán 'doctor_availability' (đúng)
-     * nhưng chỉ định rõ ràng vẫn tốt.
-     */
     protected $table = 'doctor_availability';
 
     /**

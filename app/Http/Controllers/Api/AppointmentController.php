@@ -499,10 +499,19 @@ class AppointmentController extends Controller
         $appointment->Status = $request->Status;
         $appointment->save();
 
-        return response()->json([
-            'message' => 'Cập nhật thành công!',
-            'previous_status' => $oldStatus,
-            'current_status' => $appointment->Status
-        ]);
-    }
+public function updateStatus(Request $request, $id)
+{
+    $request->validate([
+        'Status' => 'required|in:confirmed,in_progress,completed,cancelled'
+    ]);
+
+    $appointment = Appointment::findOrFail($id);
+    $appointment->Status = $request->Status;
+    $appointment->save();
+
+    return response()->json([
+        'success' => true,
+        'data' => $appointment
+    ]);
 }
+    }

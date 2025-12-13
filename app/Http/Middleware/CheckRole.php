@@ -16,22 +16,22 @@ class CheckRole
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      * @param  ...$roles (Các vai trò được phép, ví dụ: 'BacSi', 'Admin')
      */
-    public function handle(Request $request, Closure $next, ...$roles): Response
-    {
-        // 1. Lấy user đã đăng nhập (đã qua 'auth:sanctum')
-        $user = Auth::user();
-
-        // 2. Lặp qua các vai trò được phép mà chúng ta định nghĩa ở Route
-        foreach ($roles as $role) {
-            // 3. Nếu user CÓ vai trò này
-            if ($user->Role == $role) {
-                // -> Cho phép đi tiếp
-                return $next($request);
-            }
-        }
-
-        // 4. Nếu user không có vai trò nào được phép
-        // -> Trả về lỗi 403 Forbidden (Cấm)
-        return response()->json(['message' => 'Bạn không có quyền truy cập chức năng này.'], 403);
+    public function handle($request, Closure $next, ...$roles)
+{
+    $user = $request->user();
+    
+    if (!$user) {
+        return response()->json(['message' => 'Unauthorized'], 401);
     }
+    
+    // Sửa từ 'role' thành 'Role' để match với database
+    $userRole = strtolower($user->Role);
+    $allowed = array_map('strtolower', $roles);
+    
+    if (!in_array($userRole, $allowed)) {
+        return response()->json(['message' => 'Forbidden'], 403);
+    }
+    
+    return $next($request);
+}
 }
