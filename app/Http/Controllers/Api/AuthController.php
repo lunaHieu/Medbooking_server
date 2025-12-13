@@ -34,43 +34,40 @@ class AuthController extends Controller
             'Status' => 'HoatDong',
         ]);
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        Auth::login($user);
 
         return response()->json([
             'message' => 'Đăng ký tài khoản thành công!',
             'user' => $user,
-            'access_token' => $token
         ], 201);
     }
 
     public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|string',
-            'password' => 'required|string',
-        ]);
-
-        $user = User::where('Email', $request->email)
-                    ->orWhere('Username', $request->email)
-                    ->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Sai tài khoản hoặc mật khẩu'], 401);
-        }
-
-        $token = $user->createToken('api-token')->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Đăng nhập thành công',
-            'user' => $user->toApiArray(),
-            'access_token' => $token
-        ], 200);
+{
+    $request->validate([
+        'email' => 'required|string',
+        'password' => 'required|string',
+    ]);
+    $user = User::where('Email', $request->email)->orWhere('Username', $request->email)->first();
+    if (!$user) {
+        return response()->json(['message' => 'Sai tài khoản hoặc mật khẩu'], 401);
     }
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'success' => true,
+        'user' => $user->toApiArray(),
+        'access_token' => $token,
+    ], 200);
+}
+
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json([
             'message' => 'Đăng xuất thành công!'

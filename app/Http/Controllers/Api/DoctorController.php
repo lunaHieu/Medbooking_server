@@ -1,90 +1,171 @@
 <?php
-// Tên file: app/Http/Controllers/Api/DoctorController.php
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\DoctorAvailability;
-// 1. "Gọi" các Model chúng ta cần
-use App\Models\Doctor;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Carbon\Carbon; // Cho xử lý ngày giờ
+use App\Models\Doctor;
+use App\Models\Specialty;
 
 class DoctorController extends Controller
 {
     /**
-     * Lấy danh sách TẤT CẢ bác sĩ.
-     * Chạy khi gọi GET /api/doctors
+     * GET /api/doctor/profile
      */
-    public function index(Request $request)
+    public function getProfile(Request $request)
     {
-        $query = Doctor::with(['user', 'specialty']);
-
-        // 2. Lọc theo Chuyên khoa (nếu có tham số specialty_id)
-        if ($request->filled('specialty_id')) {
-            $query->where('SpecialtyID', $request->specialty_id);
+        try {
+            $user = $request->user();
+            
+            // ✅ Tải quan hệ với chuyên khoa
+            $user->load(['doctorProfile.specialty']);
+            
+            if (!$user->doctorProfile) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tài khoản chưa được gán hồ sơ bác sĩ'
+                ], 404);
+            }
+            
+            // ✅ Chuẩn bị dữ liệu chuyên khoa
+            $specialtyData = null;
+            if ($user->doctorProfile->specialty) {
+                $specialtyData = [
+                    'SpecialtyID' => $user->doctorProfile->specialty->SpecialtyID,
+                    'SpecialtyName' => $user->doctorProfile->specialty->SpecialtyName
+                ];
+            } else if ($user->doctorProfile->SpecialtyID) {
+                // Nếu có SpecialtyID nhưng chưa load relationship
+                $specialty = Specialty::find($user->doctorProfile->SpecialtyID);
+                if ($specialty) {
+                    $specialtyData = [
+                        'SpecialtyID' => $specialty->SpecialtyID,
+                        'SpecialtyName' => $specialty->SpecialtyName
+                    ];
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->UserID,
+                    'FullName' => $user->FullName,
+                    'Email' => $user->Email,
+                    'PhoneNumber' => $user->PhoneNumber,
+                    'Role' => $user->Role,
+                    'doctor_profile' => [
+                        'DoctorID' => $user->doctorProfile->DoctorID,
+                        'SpecialtyID' => $user->doctorProfile->SpecialtyID,
+                        'Degree' => $user->doctorProfile->Degree,
+                        'YearsOfExperience' => $user->doctorProfile->YearsOfExperience,
+                        'ProfileDescription' => $user->doctorProfile->ProfileDescription,
+                        'imageURL' => $user->doctorProfile->imageURL,
+                        'specialty' => $specialtyData // ✅ Đảm bảo không null
+                    ]
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Doctor profile error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi server',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null
+            ], 500);
         }
-
-        // 3. Tìm kiếm theo Tên Bác sĩ (nếu có tham số search)
-        if ($request->filled('search')) {
-            $search = $request->search;
-            // whereHas dùng để lọc dựa trên bảng quan hệ (users)
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->where('FullName', 'like', "%{$search}%");
-            });
-        }
-
-        // 4. Thực thi query lấy dữ liệu
-        $doctors = $query->get();
-
-        // 5. Trả về JSON
-        return response()->json($doctors, 200, [], JSON_UNESCAPED_UNICODE);
     }
 
     /**
-     * Lấy danh sách các slot khả dụng của bác sĩ theo ID.
-     * Chạy khi gọi GET /api/doctors/{id}/availability
+     * PUT /api/doctor/profile
      */
-    public function getAvailability($id) //tu lay id tu url
-    {
-        // 3. Lấy các slot, nhưng có 2 ĐIỀU KIỆN LỌC (filter)
-        $availableSlots = Doctor::findOrFail($id) // Tìm Bác sĩ có ID này
-            ->availabilitySlots() // Lấy các slot qua Mối quan hệ
-            ->where('Status', '=', 'Available') // ĐK 1: Chỉ lấy slot "Còn trống"
-            ->where('StartTime', '>', Carbon::now()) // ĐK 2: Chỉ lấy slot trong tương lai
-            ->orderBy('StartTime', 'asc') // Sắp xếp (sớm nhất lên đầu)
-            ->get();
-
-        // 4. Trả về JSON
-        return response()->json($availableSlots, 200, [], JSON_UNESCAPED_UNICODE);
+   public function updateProfile(Request $request)
+{
+    try {
+        $user = Auth::user();
+        
+        // ✅ VALIDATION với snake_case (ĐÚNG với front-end)
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:255',           // 'full_name' thay vì 'fullName'
+            'phone' => 'nullable|string|max:20',                // OK
+            'specialty_id' => 'nullable|integer|exists:specialties,SpecialtyID', // 'specialty_id' thay vì 'SpecialtyID'
+            'degree' => 'nullable|string|max:100',              // OK
+            'years_of_experience' => 'nullable|integer|min:0',  // OK
+            'profile_description' => 'nullable|string',         // OK
+        ]);
+        
+        // ✅ Cập nhật User
+        $user->update([
+            'FullName' => $validated['full_name'],              // Map 'full_name' → 'FullName'
+            'PhoneNumber' => $validated['phone'] ?? $user->PhoneNumber,
+        ]);
+        
+        // ✅ Cập nhật Doctor
+        if ($user->doctorProfile) {
+            $doctorData = [
+                'SpecialtyID' => $validated['specialty_id'] ?? null,  // Map 'specialty_id' → 'SpecialtyID'
+                'Degree' => $validated['degree'] ?? null,
+                'YearsOfExperience' => $validated['years_of_experience'] ?? null,
+                'ProfileDescription' => $validated['profile_description'] ?? null,
+            ];
+            
+            $user->doctorProfile->update($doctorData);
+        } else {
+            Doctor::create([
+                'UserID' => $user->UserID,
+                'SpecialtyID' => $validated['specialty_id'] ?? null,
+                'Degree' => $validated['degree'] ?? null,
+                'YearsOfExperience' => $validated['years_of_experience'] ?? null,
+                'ProfileDescription' => $validated['profile_description'] ?? null,
+            ]);
+        }
+        
+        // ✅ Refresh và response
+        $user->refresh();
+        $user->load(['doctorProfile.specialty']);
+        
+        $specialtyData = null;
+        if ($user->doctorProfile && $user->doctorProfile->specialty) {
+            $specialtyData = [
+                'SpecialtyID' => $user->doctorProfile->specialty->SpecialtyID,
+                'SpecialtyName' => $user->doctorProfile->specialty->SpecialtyName
+            ];
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật hồ sơ thành công',
+            'data' => [
+                'FullName' => $user->FullName,
+                'Email' => $user->Email,
+                'PhoneNumber' => $user->PhoneNumber,
+                'doctor' => $user->doctorProfile ? [
+                    'DoctorID' => $user->doctorProfile->DoctorID,
+                    'SpecialtyID' => $user->doctorProfile->SpecialtyID,
+                    'Degree' => $user->doctorProfile->Degree,
+                    'YearsOfExperience' => $user->doctorProfile->YearsOfExperience,
+                    'ProfileDescription' => $user->doctorProfile->ProfileDescription,
+                    'imageURL' => $user->doctorProfile->imageURL,
+                    'specialty' => $specialtyData
+                ] : null
+            ]
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        \Log::error('Update doctor profile error: ' . $e->getMessage());
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Cập nhật thất bại: ' . $e->getMessage()
+        ], 500);
     }
-    // public function getSpecialtyAvailability($id)
-    // {
-    //     // Logic: Lấy tất cả Slot trong bảng 'doctor_availability'
-    //     // Mà Slot đó thuộc về Bác sĩ (doctor)
-    //     // Mà Bác sĩ đó lại thuộc về Chuyên khoa có ID = $id
-
-    //     $slots = DoctorAvailability::whereHas('doctor', function ($query) use ($id) {
-    //         $query->where('SpecialtyID', $id);
-    //     })
-    //         ->where('Status', 'Available')
-    //         ->where('StartTime', '>', Carbon::now())
-    //         ->with('doctor.user')
-    //         ->orderBy('StartTime', 'asc')
-    //         ->get();
-
-    //     return response()->json($slots);
-    // }
-    public function show($id)
-    {
-        // 1. Dùng findOrFail để tìm bác sĩ có ID này.
-        // Nếu không tìm thấy, tự động trả về lỗi 404 Not Found.
-        $doctor = Doctor::with(['user', 'specialty'])
-            ->findOrFail($id);
-
-        // 2. Trả về JSON (sửa lỗi tiếng Việt)
-        return response()->json($doctor, 200, [], JSON_UNESCAPED_UNICODE);
-    }
-
+}
 }

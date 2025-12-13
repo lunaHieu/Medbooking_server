@@ -7,7 +7,7 @@ use App\Models\MedicalRecord;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\ExamResult; 
+use App\Models\ExamResult; // Sửa import
 
 class MedicalRecordController extends Controller
 {

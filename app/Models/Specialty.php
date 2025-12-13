@@ -27,6 +27,11 @@ class Specialty extends Model
      * Mối quan hệ 1-N:
      * Lấy tất cả Bác sĩ thuộc Chuyên khoa này.
      */
+
+    protected $fillable = [
+        'SpecialtyName',
+        'imageURL',
+    ];
     public function doctors()
     {
         // "Một Chuyên khoa CÓ NHIỀU Bác sĩ"

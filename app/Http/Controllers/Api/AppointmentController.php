@@ -478,4 +478,20 @@ class AppointmentController extends Controller
         return response()->json(['message' => 'Cảm ơn bạn đã góp ý cho hệ thống!']);
     }
 
+
+    public function updateStatus(Request $request, $id)
+{
+    $request->validate([
+        'Status' => 'required|in:confirmed,in_progress,completed,cancelled'
+    ]);
+
+    $appointment = Appointment::findOrFail($id);
+    $appointment->Status = $request->Status;
+    $appointment->save();
+
+    return response()->json([
+        'success' => true,
+        'data' => $appointment
+    ]);
+}
 }

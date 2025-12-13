@@ -1,6 +1,4 @@
 <?php
-// Tên file: app/Models/User.php
-
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -12,6 +10,9 @@ class User extends Authenticatable
     use HasApiTokens, Notifiable;
 
     protected $primaryKey = 'UserID';
+    public $timestamps = true;
+    protected $table = 'users';
+    protected $keyType = 'int';
     
     protected $fillable = [
         'FullName',
@@ -38,7 +39,7 @@ class User extends Authenticatable
 
     public function doctorProfile()
     {
-        return $this->hasOne(Doctor::class, 'UserID', 'UserID');
+        return $this->hasOne(Doctor::class, 'UserID', 'UserID')->with('specialty');
     }
 
     public function appointmentsAsPatient()
@@ -61,67 +62,17 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class, 'UserID', 'UserID');
     }
 
-    // ======== THÊM CÁC QUAN HỆ MỚI ========
-
+    // Các quan hệ khác giữ nguyên...
+    
     /**
-     * Lấy appointments với tư cách bác sĩ
+     * Lấy specialty từ doctor (nếu có)
      */
-    public function appointmentsAsDoctor()
+    public function getSpecialtyAttribute()
     {
-        return $this->hasManyThrough(
-            Appointment::class,
-            Doctor::class,
-            'UserID',       // Foreign key on doctors table
-            'DoctorID',     // Foreign key on appointments table  
-            'UserID',       // Local key on users table
-            'DoctorID'      // Local key on doctors table
-        );
-    }
-
-    /**
-     * Lấy medical records với tư cách bác sĩ
-     */
-    public function medicalRecordsAsDoctor()
-    {
-        return $this->hasManyThrough(
-            MedicalRecord::class,
-            Doctor::class,
-            'UserID',       // Foreign key on doctors table
-            'DoctorID',     // Foreign key on medical_records table  
-            'UserID',       // Local key on users table
-            'DoctorID'      // Local key on doctors table
-        );
-    }
-
-    /**
-     * Phương thức hỗ trợ để kiểm tra role
-     */
-    public function isDoctor()
-    {
-        return $this->Role === 'BacSi';
-    }
-
-    public function isPatient()
-    {
-        return $this->Role === 'BenhNhan';
-    }
-
-    public function isAdmin()
-    {
-        return $this->Role === 'QuanTriVien';
-    }
-
-    public function isStaff()
-    {
-        return $this->Role === 'NhanVien';
-    }
-
-    /**
-     * Get the username field for authentication
-     */
-    public function username()
-    {
-        return 'Username';
+        if ($this->doctorProfile && $this->doctorProfile->specialty) {
+            return $this->doctorProfile->specialty;
+        }
+        return null;
     }
 
     /**
@@ -129,7 +80,7 @@ class User extends Authenticatable
      */
     public function toApiArray()
     {
-        return [
+        $data = [
             'UserID' => $this->UserID,
             'FullName' => $this->FullName,
             'Email' => $this->Email,
@@ -143,5 +94,26 @@ class User extends Authenticatable
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
+
+        // Thêm thông tin doctor nếu có
+        if ($this->doctorProfile) {
+            $data['doctor'] = [
+                'DoctorID' => $this->doctorProfile->DoctorID,
+                'SpecialtyID' => $this->doctorProfile->SpecialtyID,
+                'Degree' => $this->doctorProfile->Degree,
+                'YearsOfExperience' => $this->doctorProfile->YearsOfExperience,
+                'ProfileDescription' => $this->doctorProfile->ProfileDescription,
+                'imageURL' => $this->doctorProfile->imageURL,
+            ];
+            
+            if ($this->doctorProfile->specialty) {
+                $data['doctor']['specialty'] = [
+                    'SpecialtyID' => $this->doctorProfile->specialty->SpecialtyID,
+                    'SpecialtyName' => $this->doctorProfile->specialty->SpecialtyName,
+                ];
+            }
+        }
+
+        return $data;
     }
 }

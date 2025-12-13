@@ -19,27 +19,57 @@ class MedicalRecordController extends Controller
      * Chạy khi gọi POST /api/doctor/medical-records
      */
     public function store(Request $request)
-    {
-        // 1. Validate (Kiểm tra) dữ liệu Bác sĩ gửi lên
-        $request->validate([
-            'AppointmentID' => 'required|integer|exists:appointments,AppointmentID|unique:medical_records',
-            'Diagnosis' => 'required|string', // Chẩn đoán
-            'Notes' => 'nullable|string',     // Ghi chú thêm
-        ]);
+{
+    $request->validate([
+        'AppointmentID' => 'required|integer|exists:appointments,AppointmentID|unique:medical_records,AppointmentID,NULL,RecordID',
+        'Diagnosis' => 'required|string',
+        'Notes' => 'nullable|string',
+    ]);
+
+    $user = Auth::user();
+    if (!$user) {
+        return response()->json(['message' => 'Chưa đăng nhập'], 401);
+    }
+
+    if ($user->Role !== 'BacSi') {
+        return response()->json(['message' => 'Bạn không phải bác sĩ'], 403);
+    }
+
+    $doctor = $user->doctorProfile;
+
+    if (!$doctor) {
+        return response()->json([
+            'message' => 'Không tìm thấy hồ sơ bác sĩ. Vui lòng kiểm tra bảng doctors có dòng UserID = ' . $user->UserID . ' chưa?'
+        ], 403);
+    }
+
+    $appointment = Appointment::where('AppointmentID', $request->AppointmentID)->first();
+    if (!$appointment) {
+        return response()->json(['message' => 'Lịch hẹn không tồn tại'], 404);
+    }
+
+    if ($doctor->DoctorID != $appointment->DoctorID) {
+        return response()->json(['message' => 'Bạn không phải bác sĩ được phân công'], 403);
+    }
 
         // 2. Lấy thông tin Bác sĩ (Doctor Profile)
         $doctor = Auth::user()->doctorProfile;
 
         // 3. Tìm Lịch hẹn (Appointment) tương ứng
-        $appointment = Appointment::findOrFail($request->AppointmentID);
+        $appointment = Appointment::where('AppointmentID', $request->AppointmentID)->first();
 
+if (!$appointment) {
+    return response()->json([
+        'message' => 'Lịch hẹn không tồn tại hoặc đã bị xóa. AppointmentID: ' . $request->AppointmentID
+    ], 404);
+}
         // 4. === LOGIC PHÂN QUYỀN (AUTHORIZATION) ===
         // Bác sĩ có phải là người khám lịch hẹn này không?
-        if ($doctor->DoctorID !== $appointment->DoctorID) {
-            return response()->json([
-                'message' => 'Bạn không có quyền tạo bệnh án cho lịch hẹn này.'
-            ], 403); // 403 Forbidden
-        }
+       if ($doctor->DoctorID != $appointment->DoctorID) {
+    return response()->json([
+        'message' => 'Bạn không phải bác sĩ được phân công cho lịch hẹn này.'
+    ], 403);
+}
 
         // 5. Bắt đầu Transaction
         try {

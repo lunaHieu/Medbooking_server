@@ -10,7 +10,6 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        
         $doctor = $user->doctor;
 
         if (!$doctor) {

@@ -1,32 +1,32 @@
 <?php
 
-namespace App\Http\Controllers\Api\Doctor;
+namespace App\Models;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Doctor;
-use App\Models\Appointment; 
+use Illuminate\Database\Eloquent\Model;
 
-class DashboardController extends Controller
+class Doctor extends Model
 {
-    public function index(Request $request)
+    protected $table = 'doctors';
+    protected $primaryKey = 'DoctorID';
+
+    protected $fillable = [
+        'UserID',
+        'SpecialtyID',
+        'Degree',
+        'YearsOfExperience',
+        'ProfileDescription',
+        'imageURL',
+    ];
+
+    public $timestamps = false;
+
+    public function specialty()
     {
-        $user = $request->user();
-        
-        if (!$user || !$user->doctorProfile) {
-            return response()->json(['message' => 'Không tìm thấy hồ sơ bác sĩ'], 404);
-        }
+        return $this->belongsTo(Specialty::class, 'SpecialtyID', 'SpecialtyID');
+    }
 
-        $doctor = $user->doctorProfile;
-
-        $appointments = $doctor->appointments()
-            ->whereIn('Status', ['Pending', 'Confirmed', 'CheckedIn', 'Completed'])
-            ->get();
-
-        return response()->json([
-            'total_appointments_count' => $appointments->count(),
-            'completed_appointments_count' => $appointments->where('Status', 'Completed')->count(),
-            'waiting_appointments_count' => $appointments->whereIn('Status', ['Pending', 'CheckedIn'])->count(),
-        ]);
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'UserID', 'UserID');
     }
 }

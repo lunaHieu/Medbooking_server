@@ -25,9 +25,10 @@ class CheckRole
     }
     
     // Sửa từ 'role' thành 'Role' để match với database
-    $userRole = $user->Role; // Viết hoa 
+    $userRole = strtolower($user->Role);
+    $allowed = array_map('strtolower', $roles);
     
-    if (!in_array($userRole, $roles)) {
+    if (!in_array($userRole, $allowed)) {
         return response()->json(['message' => 'Forbidden'], 403);
     }
     
