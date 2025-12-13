@@ -87,19 +87,37 @@ class PatientController extends Controller
      * Cập nhật Bệnh nhân
      * PUT /api/admin/patients/{id}
      */
+    /**
+     * Cập nhật Bệnh nhân
+     * PUT /api/admin/patients/{id}
+     */
     public function update(Request $request, $id)
     {
+        // 1. Tìm bệnh nhân
         $patient = User::where('Role', 'BenhNhan')->findOrFail($id);
 
+        // 2. Validate dữ liệu
+        // LƯU Ý QUAN TRỌNG: 
+        // - Bỏ 'Username' khỏi validate vì Frontend không gửi lên (đỡ bị lỗi required)
+        // - Thêm 'Email' vào để kiểm tra trùng lặp
+        
         $request->validate([
-            'FullName' => 'required|string|max:255',
-            'Username' => ['required', Rule::unique('users')->ignore($patient->UserID, 'UserID')],
+            'FullName'    => 'required|string|max:255',
             'PhoneNumber' => ['required', Rule::unique('users')->ignore($patient->UserID, 'UserID')],
+            'Email'       => ['required', 'email', Rule::unique('users')->ignore($patient->UserID, 'UserID')], // <--- Thêm dòng này
+            'DateOfBirth' => 'nullable|date',
+            'Gender'      => 'nullable|string',
+            'Address'     => 'nullable|string',
         ]);
 
-        $patient->update($request->except(['password', 'Role'])); // Không cho sửa Role ở đây
+        // 3. Update dữ liệu
+        // Loại bỏ các trường không được phép sửa (password, Role, Username)
+        $patient->update($request->except(['password', 'Role', 'Username']));
 
-        return response()->json(['message' => 'Cập nhật thành công!', 'patient' => $patient], 200);
+        return response()->json([
+            'message' => 'Cập nhật thành công!', 
+            'patient' => $patient
+        ], 200);
     }
 
     /**

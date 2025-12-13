@@ -197,6 +197,8 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     Route::get('/patients', [PatientController::class, 'index']);
     Route::get('/patients/{id}', [PatientController::class, 'show']);
     Route::get('/patients/{id}/history', [PatientController::class, 'getHistory']);
+    Route::put('/patients/{id}', [PatientController::class, 'update']);
+    Route::post('/patients', [PatientController::class, 'store']);
     // === API QUẢN LÝ BỆNH ÁN (MỚI) ===
     // 1. Lấy danh sách / Tìm kiếm Bệnh án
     // URL: GET /api/admin/medical-records
