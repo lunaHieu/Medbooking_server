@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User; // <-- Thêm
-use Illuminate\Validation\Rule; // <-- Thêm
-
+use App\Models\User;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 class UserManagementController extends Controller
 {
     /**
@@ -28,10 +29,10 @@ class UserManagementController extends Controller
         // 2. Tìm kiếm (Search)
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('FullName', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('Username', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('PhoneNumber', 'like', '%' . $searchTerm . '%');
+                    ->orWhere('Username', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('PhoneNumber', 'like', '%' . $searchTerm . '%');
             });
         }
 
@@ -61,28 +62,48 @@ class UserManagementController extends Controller
         $request->validate([
             'FullName' => 'required|string|max:255',
             'Username' => [
-                'required','string','max:100',
+                'required',
+                'string',
+                'max:100',
                 Rule::unique('users')->ignore($user->UserID, 'UserID')
             ],
             'PhoneNumber' => [
-                'required','string','max:15',
+                'required',
+                'string',
+                'max:15',
                 Rule::unique('users')->ignore($user->UserID, 'UserID')
             ],
             // Cho phép Admin thay đổi Role và Status
             'Role' => 'required|string|in:BenhNhan,BacSi,NhanVien,QuanTriVien',
-            'Status' => 'required|string|in:HoatDong,Khoa', // (Khóa)
+            'Status' => 'required|string|in:HoatDong,Khoa',
+            'avatar' => 'nullable|image|max:10240',
+            'password' => 'nullable|string|min:6',
         ]);
 
         // Cập nhật
         $user->update($request->only([
-            'FullName', 
-            'Username', 
-            'PhoneNumber', 
-            'Role', 
+            'FullName',
+            'Username',
+            'PhoneNumber',
+            'Role',
             'Status'
             // (Chúng ta không cho cập nhật mật khẩu ở API này)
         ]));
+        if ($request->hasFile('avatar')) {
+            // Xóa ảnh cũ nếu có
+            if ($user->avatar_url && Storage::disk('public')->exists($user->avatar_url)) {
+                Storage::disk('public')->delete($user->avatar_url);
+            }
 
+            // Lưu ảnh mới
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar_url = $path;
+        }
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
         return response()->json([
             'message' => 'Cập nhật tài khoản thành công!',
             'user' => $user
@@ -123,4 +144,5 @@ class UserManagementController extends Controller
             'user' => $user
         ], 201);
     }
+
 }

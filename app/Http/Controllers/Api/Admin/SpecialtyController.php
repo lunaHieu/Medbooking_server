@@ -17,7 +17,7 @@ class SpecialtyController extends Controller
         $request->validate([
             'SpecialtyName' => 'required|string|max:255|unique:specialties',
             'Description' => 'nullable|string',
-            'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         $path = null;
@@ -44,7 +44,7 @@ class SpecialtyController extends Controller
         $request->validate([
             'SpecialtyName' => 'required|string|max:255|unique:specialties,SpecialtyName,' . $id . ',SpecialtyID',
             'Description' => 'nullable|string',
-            'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         if ($request->hasFile('imageURL')) {
@@ -75,7 +75,7 @@ class SpecialtyController extends Controller
         if ($specialty->doctors()->count() > 0) {
             return response()->json(['message' => 'Không thể xoá, chuyên khoa này đang có bác sĩ.'], 422);
         }
-        
+
         if ($specialty->imageURL) {
             $oldPath = str_replace('/storage/', '', $specialty->imageURL);
             Storage::disk('public')->delete($oldPath);

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Auth;
 class NotificationController extends Controller
 {
     /**
@@ -36,8 +36,7 @@ class NotificationController extends Controller
             'TargetGroup' => 'required|in:all,patients,doctors,staff',
             'Channel' => 'required|in:in_app,email', // Hiện tại chỉ support in_app
         ]);
-
-        // 1. Xác định nhóm người nhận
+        //Gửi all không cần where
         $query = User::query();
         if ($request->TargetGroup === 'patients') {
             $query->where('Role', 'BenhNhan');
@@ -46,26 +45,25 @@ class NotificationController extends Controller
         } elseif ($request->TargetGroup === 'staff') {
             $query->where('Role', 'NhanVien');
         }
-        // 'all' thì không cần where
 
         $users = $query->get();
 
-        // 2. Gửi thông báo (Tạo bản ghi trong DB)
-        // (Vì gửi hàng loạt có thể lâu, nên dùng Transaction)
+        // Gửi thông báo (Tạo bản ghi trong DB)
+        // Transaction để giảm thiểu khả năng bị treo DB
         DB::beginTransaction();
         try {
             foreach ($users as $user) {
                 $notification = new Notification();
                 $notification->UserID = $user->UserID;
-                // $notification->Title = $request->Title; // (Nếu DB chưa có Title thì bỏ qua hoặc thêm cột)
-                $notification->Content = $request->Content; // Nội dung: "Tiêu đề: Nội dung"
+                $notification->Title = $request->Title;
+                $notification->Content = $request->Content;
                 $notification->NotificationType = 'SystemAlert';
                 $notification->Channel = $request->Channel;
                 $notification->Status = 'Sent';
                 $notification->save();
             }
             DB::commit();
-            
+
             return response()->json([
                 'message' => 'Đã gửi thông báo thành công cho ' . $users->count() . ' người dùng.'
             ], 200);
@@ -75,4 +73,8 @@ class NotificationController extends Controller
             return response()->json(['message' => 'Lỗi khi gửi thông báo.', 'error' => $e->getMessage()], 500);
         }
     }
+    /**
+     * Xóa một thông báo cụ thể
+     */
+    public function destroy($id)
 }

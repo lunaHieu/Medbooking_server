@@ -5,8 +5,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -17,10 +16,10 @@ return new class extends Migration
             $table->string('ServiceName', 255);
             $table->text('Description')->nullable();
             $table->integer('EstimatedDuration')->nullable(); // (tính bằng phút)
-            
+
             // Dùng "decimal" cho tiền tệ.
             // (18, 2) nghĩa là: tổng 18 chữ số, với 2 chữ số sau dấu phẩy, vì khi làm tròn int or float sẽ dễ bị sai
-            $table->decimal('Price', 18, 2)->nullable(); 
+            $table->decimal('Price', 18, 2)->nullable();
 
             // --- Đây là phần quan trọng: Định nghĩa Khóa Ngoại ---
 
@@ -31,8 +30,9 @@ return new class extends Migration
 
             // 2. Thiết lập liên kết (Constraint)
             $table->foreign('SpecialtyID') // Cột 'SpecialtyID' của bảng này...
-                  ->references('SpecialtyID') // ...tham chiếu đến cột 'SpecialtyID'...
-                  ->on('specialties'); // ...nằm ở trong bảng 'Specialties'
+                ->references('SpecialtyID') // ...tham chiếu đến cột 'SpecialtyID'...
+                ->on('specialties'); // ...nằm ở trong bảng 'Specialties'
+            $table->timestamps();
         });
     }
 

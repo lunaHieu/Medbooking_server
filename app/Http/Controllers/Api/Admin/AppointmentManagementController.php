@@ -28,7 +28,7 @@ class AppointmentManagementController extends Controller
             'SpecialtyName' => 'required|string|max:255|unique:specialties',
             'Description' => 'nullable|string',
             // Validate file ảnh: Phải là ảnh, tối đa 2MB
-            'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
+            'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         // --- Xử lý Upload Ảnh ---
@@ -42,10 +42,10 @@ class AppointmentManagementController extends Controller
         $specialty = new Specialty();
         $specialty->SpecialtyName = $request->SpecialtyName;
         $specialty->Description = $request->Description;
-        
+
         // Nếu có ảnh thì lưu đường dẫn đầy đủ, nếu không thì null
         $specialty->imageURL = $path ? Storage::url($path) : null;
-        
+
         $specialty->save();
 
         return response()->json([
@@ -66,7 +66,7 @@ class AppointmentManagementController extends Controller
         $request->validate([
             'SpecialtyName' => 'required|string|max:255|unique:specialties,SpecialtyName,' . $id . ',SpecialtyID',
             'Description' => 'nullable|string',
-            'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         // --- Xử lý Ảnh mới ---
@@ -107,7 +107,7 @@ class AppointmentManagementController extends Controller
         if ($specialty->doctors()->count() > 0) {
             return response()->json(['message' => 'Không thể xoá chuyên khoa này, vẫn còn bác sĩ đang liên kết.'], 422);
         }
-        
+
         // Xóa ảnh khi xóa chuyên khoa
         if ($specialty->imageURL) {
             $oldPath = str_replace('/storage/', '', $specialty->imageURL);
@@ -116,6 +116,6 @@ class AppointmentManagementController extends Controller
 
         $specialty->delete();
 
-        return response()->json(['message' => 'Xoá chuyên khoa thành công.'], 200); 
+        return response()->json(['message' => 'Xoá chuyên khoa thành công.'], 200);
     }
 }

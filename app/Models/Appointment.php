@@ -1,5 +1,4 @@
 <?php
-// Tên file: app/Models/Appointment.php
 
 namespace App\Models;
 
@@ -13,77 +12,59 @@ class Appointment extends Model
     protected $table = 'appointments';
     protected $primaryKey = 'AppointmentID';
 
-    /**
-     * Bảng này có dùng timestamps.
-     */
+    // Các trường được phép mass assignment
+    protected $fillable = [
+        'PatientID',
+        'DoctorID',
+        'ServiceID',
+        'SlotID',
+        'StartTime',
+        'Status',
+        'InitialSymptoms',
+        'CancellationReason',
+        'Type'
+    ];
 
     /**
      * === Relationships ===
      */
 
-    /**
-     * Mối quan hệ N-1 (Ngược):
-     * Lấy Bệnh nhân (User) của Lịch khám này.
-     */
     public function patient()
     {
-        // "Một Lịch khám THUỘC VỀ một Bệnh nhân (User)"
-        return $this->belongsTo(User::class, 'PatientID');
+        return $this->belongsTo(User::class, 'PatientID', 'UserID');
     }
 
-    /**
-     * Mối quan hệ N-1 (Ngược):
-     * Lấy Bác sĩ (Doctor) của Lịch khám này.
-     */
     public function doctor()
     {
-        // "Một Lịch khám THUỘC VỀ một Bác sĩ (Doctor)"
-        return $this->belongsTo(Doctor::class, 'DoctorID');
+        return $this->belongsTo(Doctor::class, 'DoctorID', 'DoctorID');
     }
 
-    /**
-     * Mối quan-hệ N-1 (Ngược):
-     * Lấy Dịch vụ (Service) được đặt (nếu có).
-     */
     public function service()
     {
-        return $this->belongsTo(Service::class, 'ServiceID');
+        return $this->belongsTo(Service::class, 'ServiceID', 'ServiceID');
     }
 
     /**
-     * Mối quan hệ N-1 (Ngược):
-     * Lấy Slot thời gian đã đặt (nếu có).
+     * [QUAN TRỌNG] Đổi tên từ 'slot' thành 'schedule' 
+     * để khớp với câu lệnh with('schedule') trong Controller
      */
-    public function slot()
+    public function schedule()
     {
-        return $this->belongsTo(DoctorAvailability::class, 'SlotID');
+        return $this->belongsTo(DoctorAvailability::class, 'SlotID', 'SlotID');
     }
 
-    /**
-     * Mối quan hệ 1-1:
-     * Lấy Hồ sơ bệnh án (MedicalRecord) được tạo ra từ Lịch khám này.
-     */
     public function medicalRecord()
     {
-        // "Một Lịch khám CÓ MỘT Hồ sơ bệnh án"
-        return $this->hasOne(MedicalRecord::class, 'AppointmentID');
+        return $this->hasOne(MedicalRecord::class, 'AppointmentID', 'AppointmentID');
     }
 
-    /**
-     * Mối quan hệ 1-N:
-     * Lấy các Đánh giá (Feedbacks) cho Lịch khám này.
-     */
     public function feedbacks()
     {
-        return $this->hasMany(Feedback::class, 'AppointmentID');
+        return $this->hasMany(Feedback::class, 'AppointmentID', 'AppointmentID');
     }
 
-    /**
-     * Mối quan hệ 1-N:
-     * Lấy các Thông báo (Notifications) liên quan đến Lịch khám này.
-     */
     public function notifications()
     {
-        return $this->hasMany(Notification::class, 'AppointmentID');
+        return $this->hasMany(Notification::class, 'AppointmentID', 'AppointmentID');
     }
 }

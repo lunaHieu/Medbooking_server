@@ -13,14 +13,23 @@ class ServiceController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Service::query()->with('specialty'); // Lấy kèm tên chuyên khoa
 
-        if ($request->has('search')) {
+        $query = Service::query()->with('specialty');
+
+        if ($request->has('specialty_id') && $request->input('specialty_id') != null) {
+            $query->where('SpecialtyID', $request->input('specialty_id'));
+        }
+
+        if ($request->has('search') && $request->input('search') != null) {
             $searchTerm = $request->input('search');
             $query->where('ServiceName', 'like', '%' . $searchTerm . '%');
         }
 
+        $query->orderBy('ServiceID', 'desc');
+
         $services = $query->get();
+
+        //Trả về JSON (Giữ nguyên JSON_UNESCAPED_UNICODE để tiếng Việt không bị lỗi font)
         return response()->json($services, 200, [], JSON_UNESCAPED_UNICODE);
     }
 

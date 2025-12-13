@@ -36,14 +36,14 @@ class AuthController extends Controller
         $user->Username = $request->Username;
         $user->PhoneNumber = $request->PhoneNumber;
         $user->Email = $request->Email;
-        
+
         // 3. Băm mật khẩu (rất quan trọng!)
         // KHÔNG BAO GIỜ lưu mật khẩu gốc vào database
         $user->password = Hash::make($request->password);
-        
+
         $user->Role = 'BenhNhan'; // Mặc định khi đăng ký là Bệnh nhân
         $user->Status = 'HoatDong'; // Mặc định là Hoạt động
-        
+
         // 4. Lưu User vào database
         $user->save();
 
@@ -75,7 +75,7 @@ class AuthController extends Controller
         // - So sánh với 'password' (đã hash) trong database
         if (Auth::attempt($credentials)) {
             // Xác thực thành công!
-            
+
             // Lấy thông tin user vừa login
             $user = $request->user();
 
@@ -164,6 +164,7 @@ class AuthController extends Controller
             // Validate Email & Phone: Unique nhưng bỏ qua chính mình
             'Email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('users')->ignore($user->UserID, 'UserID')],
             'PhoneNumber' => ['required', 'string', \Illuminate\Validation\Rule::unique('users')->ignore($user->UserID, 'UserID')],
+            // 'avatar_url' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         // Cập nhật (chỉ các trường cho phép)
@@ -171,5 +172,87 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Cập nhật hồ sơ thành công!', 'user' => $user], 200);
     }
+    /**
+     * Lấy danh sách người thân
+     */
+    public function getFamilyMembers(Request $request)
+    {
+        $user = $request->user();
+        //Lấy danh sách qua relationship
+        $members = $user->familyMembers;
+        $data = $members->map(function ($m) {
+            return [
+                'UserID' => $m->UserID,
+                'FullName' => $m->FullName,
+                'PhoneNumber' => $m->PhoneNumber,
+                'Email' => $m->Email,
+                'DateOfBirth' => $m->DateOfBirth,
+                'Gender' => $m->Gender,
+                'avatar_url' => $m->avatar_url,
+                'RelationType' => $m->pivot->RelationType,
+            ];
+        });
+        return response()->json($data);
+    }
+    /**
+     * Thêm thành viên
+     */
+    public function addFamilyMembers(Request $request)
+    {
+        $request->validate([
+            'RelativeUserID' => 'required|integer|exists:users,UserID',
+            'RelationType' => 'required|string|max:50'
+        ]);
+        $currentUser = $request->user();
+        $relativeId = $request->RelativeUserID;
+        if ($currentUser->UserID == $relativeId) {
+            return response()->json(['message' => 'Bạn không thể thêm chính mình vào gia đình.'], 400);
+        }
+        $exists = \Illuminate\Support\Facades\DB::table('user_relations')
+            ->where('UserID', $currentUser->UserID)
+            ->where('RelativeUserID', $relativeId)
+            ->exists();
+        if ($exists) {
+            return response()->json(['message' => 'Người này đã có trong danh sách.'], 400);
+        }
+        //Thực hiện liên kết
+        $currentUser->familyMembers()->attach($relativeId, [
+            'RelationType' => $request->RelationType
+        ]);
+        return response()->json(['message' => 'Thêm thành viên thành công!'], 201);
+    }
+    /**
+     * Xóa thành viên khỏi danh sách (Hủy liên kết)
+     */
+    public function removeFamilyMember(Request $request, $id)
+    {
+        $currentUser = $request->user();
+        $currentUser->familyMembers()->detach($id);
+        return response()->json(['message' => 'Đã xáo thành viên khỏi danh sách.']);
+    }
+    /**
+     * Tìm kiếm thành viên
+     */
+    public function searchUserPublic(Request $request)
+    {
+        $query = $request->input('query'); // SĐT hoặc Email gửi lên
 
+        if (!$query) {
+            return response()->json([]);
+        }
+
+        // Chỉ tìm theo SĐT hoặc Email chính xác để bảo mật thông tin
+        $users = User::where('PhoneNumber', $query)
+            ->orWhere('Email', $query)
+            ->select('UserID', 'FullName', 'PhoneNumber', 'Email', 'avatar_url', 'Role')
+            ->get();
+
+        // Lọc bỏ chính mình khỏi kết quả
+        $currentUserId = $request->user()->UserID;
+        $users = $users->filter(function ($u) use ($currentUserId) {
+            return $u->UserID !== $currentUserId;
+        })->values();
+
+        return response()->json($users);
+    }
 }

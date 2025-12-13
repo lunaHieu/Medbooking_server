@@ -60,7 +60,7 @@ class User extends Authenticatable
     {
         // "Một User CÓ MỘT Doctor profile, liên kết bằng khóa ngoại 'DoctorID'"
         // (Khóa ngoại 'DoctorID' nằm trên bảng 'doctors')
-        return $this->hasOne(Doctor::class, 'DoctorID');
+        return $this->hasOne(Doctor::class, 'UserID', 'UserID');
     }
 
     /**
@@ -99,5 +99,20 @@ class User extends Authenticatable
     public function notifications()
     {
         return $this->hasMany(Notification::class, 'UserID');
+    }
+    /**
+     * Lấy danh sách người thân để liên kết
+     *
+     */
+    public function familyMembers()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'user_relations',
+            'UserID',
+            'RelativeUserID'
+        )
+            ->withPivot('RelationType')
+            ->withTimestamps();
     }
 }
