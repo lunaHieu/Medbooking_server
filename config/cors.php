@@ -15,14 +15,19 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'staff/*'],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
+<<<<<<< HEAD
     'http://localhost:3000', // Cho phép Next.js (Frontend) gọi
     // (Nếu Frontend của bạn chạy ở cổng khác, hãy điền cổng đó)
     'http://127.0.0.1:3000', // Thêm cái này cho chắc
+=======
+    'http://localhost:3000',
+     'http://127.0.0.1:3000', 
+>>>>>>> tung-feature-doctor-dashboard
 ],
 
     'allowed_origins_patterns' => [],

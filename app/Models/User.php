@@ -1,5 +1,8 @@
 <?php
+<<<<<<< HEAD
 // Tên file: app/Models/User.php
+=======
+>>>>>>> tung-feature-doctor-dashboard
 
 namespace App\Models;
 
@@ -47,10 +50,18 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+<<<<<<< HEAD
     /**
      * === ĐỊNH NGHĨA CÁC MỐI QUAN HỆ (Relationships) ===
      * Đây là phần "kỳ diệu" của Eloquent
      */
+=======
+    protected $casts = [
+        'DateOfBirth' => 'date',
+    ];
+
+    // === RELATIONSHIPS ===
+>>>>>>> tung-feature-doctor-dashboard
 
     /**
      * Mối quan hệ 1-1:
@@ -58,9 +69,15 @@ class User extends Authenticatable
      */
     public function doctorProfile()
     {
+<<<<<<< HEAD
         // "Một User CÓ MỘT Doctor profile, liên kết bằng khóa ngoại 'DoctorID'"
         // (Khóa ngoại 'DoctorID' nằm trên bảng 'doctors')
         return $this->hasOne(Doctor::class, 'UserID', 'UserID');
+=======
+        return $this->hasOne(Doctor::class, 'DoctorID', 'UserID')
+                     ->withDefault()
+                     ->with('specialty');
+>>>>>>> tung-feature-doctor-dashboard
     }
 
     /**
@@ -100,6 +117,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Notification::class, 'UserID');
     }
+<<<<<<< HEAD
     /**
      * Lấy danh sách người thân để liên kết
      *
@@ -114,5 +132,52 @@ class User extends Authenticatable
         )
             ->withPivot('RelationType')
             ->withTimestamps();
+=======
+
+    public function getSpecialtyAttribute()
+    {
+        return $this->doctorProfile?->specialty;
+    }
+
+    public function toApiArray()
+    {
+        $data = [
+            'UserID' => $this->UserID,
+            'FullName' => $this->FullName,
+            'Username' => $this->Username,
+            'Email' => $this->Email,
+            'PhoneNumber' => $this->PhoneNumber,
+            'Role' => $this->Role,
+            'Status' => $this->Status,
+            'DateOfBirth' => $this->DateOfBirth?->format('Y-m-d'),
+            'Gender' => $this->Gender,
+            'Address' => $this->Address,
+            'avatar_url' => $this->avatar_url ? asset('storage/' . $this->avatar_url) : null,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+
+        if ($this->doctorProfile) {
+            $data['doctor'] = [
+                'DoctorID' => $this->doctorProfile->DoctorID,
+                'SpecialtyID' => $this->doctorProfile->SpecialtyID,
+                'Degree' => $this->doctorProfile->Degree,
+                'YearsOfExperience' => $this->doctorProfile->YearsOfExperience,
+                'ProfileDescription' => $this->doctorProfile->ProfileDescription,
+                'imageURL' => $this->doctorProfile->imageURL ? asset('storage/' . $this->doctorProfile->imageURL) : null,
+            ];
+
+            if ($this->doctorProfile->specialty) {
+                $data['doctor']['specialty'] = [
+                    'SpecialtyID' => $this->doctorProfile->specialty->SpecialtyID,
+                    'SpecialtyName' => $this->doctorProfile->specialty->SpecialtyName,
+                    'Description' => $this->doctorProfile->specialty->Description,
+                    'imageURL' => $this->doctorProfile->specialty->imageURL,
+                ];
+            }
+        }
+
+        return $data;
+>>>>>>> tung-feature-doctor-dashboard
     }
 }
