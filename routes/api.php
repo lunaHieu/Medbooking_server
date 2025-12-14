@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\DoctorAvailabilityController;
 use App\Http\Controllers\Api\MedicalRecordController;
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\Admin\FeedbackController;
+
 
 // Doctor Controllers
 use App\Http\Controllers\Api\Doctor\DashboardController as DoctorDashboardController;
@@ -152,7 +154,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ===================================================
     // BÁC SĨ 
     // ===================================================
-    Route::middleware('role:Doctor')->prefix('doctor')->group(function () {
+    Route::middleware('role:BacSi')->prefix('doctor')->group(function () {
 
         // DASHBOARD
         Route::get('/dashboard', [DoctorDashboardController::class, 'index']);
@@ -166,27 +168,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/queue', [QueueController::class, 'index']);
 
         // ✅ PROFILE - ENDPOINT QUAN TRỌNG
-        Route::put('/profile', [DoctorController::class, 'updateProfile']);
+       Route::get('/profile', [DoctorController::class, 'getProfile']);
+Route::put('/profile', [DoctorController::class, 'updateProfile']);
 
-        Route::patch('/doctor/appointments/{id}/status',
+
+
+        Route::patch('/appointments/{id}/status',
     [AppointmentController::class, 'updateStatus']
 );
 
-        Route::get('/profile', function (Request $request) {
-    $user = $request->user();
-
-    return response()->json([
-        'success' => true,
-        'data' => [
-            'id' => $user->UserID,
-            'FullName' => $user->FullName,
-            'Email' => $user->Email,
-            'PhoneNumber' => $user->PhoneNumber,
-            'Role' => $user->Role,
-            'doctor_profile' => $user->doctorProfile,
-        ]
-    ]);
-});
 
         // MEDICAL RECORDS
         Route::get('/my-medical-records', [MedicalRecordController::class, 'myMedicalRecords']);
@@ -226,6 +216,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/patients/{id}', [PatientController::class, 'show']);
         Route::get('/medical-records', [MedicalRecordController::class, 'index']);
         Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
+
+        Route::get('/users', [PatientController::class, 'index']); 
+    Route::get('/users/{id}', [PatientController::class, 'show']);
+    Route::get('/services', [AdminServiceController::class, 'index']);
+      Route::get('/feedbacks', [FeedbackController::class, 'index']);
     });
 
     // ===================================================
@@ -233,9 +228,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ===================================================
     Route::middleware('role:NhanVien')->prefix('staff')->group(function () {
         Route::get('/dashboard-stats', [StaffDashboardController::class, 'index']);
-        Route::get('/pending-appointments', function () {
-    return response()->json([]); // Luôn trả về array rỗng
-});
+        Route::get('/pending-appointments', [AppointmentController::class, 'getPendingAppointments']);
         Route::post('/appointments', [AppointmentController::class, 'staffCreateAppointment']);
         Route::patch('/appointments/{id}/confirm', [AppointmentController::class, 'confirmAppointment']);
         Route::put('/appointments/{id}', [AppointmentController::class, 'staffUpdateAppointment']);
@@ -250,8 +243,9 @@ Route::middleware('auth:sanctum')->group(function () {
 // =======================================================
 // TEST ROUTES
 // =======================================================
-Route::prefix('doctor')->group(function () {
-    Route::get('/dashboard-stats-test', [DoctorDashboardController::class, 'testData']);
+Route::prefix('test')->group(function () {
+    Route::get('/doctor-dashboard-stats', [DoctorDashboardController::class, 'testData']);
+
     Route::get('/queue-test', [QueueController::class, 'testData']);
     
     Route::get('/my-medical-records-test', function () {
