@@ -50,4 +50,9 @@ class NotificationController extends Controller
 
         return response()->json(['message' => 'Đã xóa thông báo'], 200);
     }
+    public function destroyAll()
+    {
+        Notification::query()->delete();
+        return response()->json(['message' => 'Đã xóa toàn bộ lịch sử thông báo']);
+    }
 }

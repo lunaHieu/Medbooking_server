@@ -36,7 +36,7 @@ use App\Http\Controllers\Api\NotificationController;
 */
 
 //route benh nhan (patient)
-// --- CÁC ROUTE ĐƯỢC BẢO VỆ (Bắt buộc phải có "chìa khóa" - Token) ---
+// CÁC ROUTE ĐƯỢC BẢO VỆ 
 Route::middleware('auth:sanctum')->group(function () {
     //route GET /api/users
     Route::get('/user', function (Request $request) {
@@ -54,7 +54,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-appointments', [AppointmentController::class, 'myAppointments']);
     //sau nay se them route bao ve khac vd: POST /api/appointment vao day
 
-    // === THÊM ROUTE MỚI CỦA BẠN VÀO ĐÂY ===
     // API để tạo một lịch hẹn mới
     Route::post('/appointments', [AppointmentController::class, 'store']);
 
@@ -66,7 +65,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
 
     // API để Bệnh nhân tự tải ảnh đại diện
-    // (Chúng ta sẽ dùng AuthController cho tiện)
     Route::post('/user/upload-avatar', [AuthController::class, 'uploadAvatar']);
 
     //Quản lí gia đình
@@ -79,9 +77,10 @@ Route::middleware('auth:sanctum')->group(function () {
     //đã đọc
     Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('/notifications/delete-all', [NotificationController::class, 'destroyAll']);
 });
 
-// --- CÁC ROUTE KHÔNG BẢO VỆ (Ai cũng có thể gọi được) ---
+//CÁC ROUTE KHÔNG BẢO VỆ (Ai cũng có thể gọi được)
 Route::get('/specialties', [SpecialtyController::class, 'index']);
 
 //Route cho Đăng ký (Register)
@@ -89,23 +88,20 @@ Route::post('/register', [AuthController::class, 'register']);
 
 //Route cho Đăng nhập (Login)
 Route::post('/login', [AuthController::class, 'login']);
-
+//Lấy các bác sĩ
 Route::get('/doctors', [DoctorController::class, 'index']);
-// {id} là một "tham số" (parameter) mà Laravel sẽ tự động bắt lấy
-// Nó sẽ chạy hàm 'getAvailability' trong DoctorController
+//Lấy lịch trống của bác sĩ cụ thể
 Route::get('/doctors/{id}/availability', [DoctorController::class, 'getAvailability']);
 
-
-// {id} là "tham số"
-// Nó sẽ chạy hàm 'show' trong DoctorController
-// 'show' là tên quy ước của Laravel cho "hiển thị 1 cái"
+//Lấy chi tiết 1 bác sĩ
 Route::get('/doctors/{id}', [DoctorController::class, 'show']);
 // Lấy lịch trống theo Chuyên khoa
-// URL: GET /api/specialties/{id}/availability
 Route::get('/specialties/{id}/availability', [SpecialtyController::class, 'getAvailability']);
-
+//Lấy hết dịch vụ
 Route::get('/services', [ServiceController::class, 'index']);
+//Lấy chi tiết từng dịch vụ
 Route::get('/services/{id}', [ServiceController::class, 'show']);
+//Lấy chi tiết từng chuyên khoa
 Route::get('/specialties/{id}', [SpecialtyController::class, 'show']);
 //Gọi ra 3 feedbacks tốt nhất dựa theo số sao
 Route::get('/top-feedbacks', [FeedbackController::class, 'getTopFeedbacks']);
@@ -113,51 +109,40 @@ Route::get('/top-feedbacks', [FeedbackController::class, 'getTopFeedbacks']);
 //2 lop bao ve 
 //1. auth:sanctum
 //2. role:dotor
-Route::middleware(['auth:sanctum', 'role:BacSi'])->prefix('doctor')->group(function () {
+Route::middleware(['auth:sanctum', 'role:BacSi'])
+    ->prefix('doctor')
+    ->group(function () {
 
-    // API để Bác sĩ tự tạo lịch trống
-    // URL sẽ là: POST /api/doctor/availability
-    Route::post('/availability', [App\Http\Controllers\Api\DoctorAvailabilityController::class, 'store']);
+        // API để Bác sĩ tự tạo lịch trống
+        Route::post('/availability', [App\Http\Controllers\Api\DoctorAvailabilityController::class, 'store']);
 
-    // API Bác sĩ xem lịch hẹn đã đặt của mình
-    // URL sẽ là: GET /api/doctor/my-schedule
-    Route::get('/my-schedule', [AppointmentController::class, 'doctorSchedule']);
+        // API Bác sĩ xem lịch hẹn đã đặt của mình
+        Route::get('/my-schedule', [AppointmentController::class, 'doctorSchedule']);
 
-    // API Bác sĩ tạo hồ sơ bệnh án
-    // URL sẽ là: POST /api/doctor/medical-records
-    Route::post('/medical-records', [MedicalRecordController::class, 'store']);
+        // API Bác sĩ tạo hồ sơ bệnh án
+        Route::post('/medical-records', [MedicalRecordController::class, 'store']);
 
-    // API Lấy hàng đợi (queue) - những người đã "CheckedIn"
-    // URL: GET /api/doctor/queue
-    Route::get('/queue', [AppointmentController::class, 'getDoctorQueue']);
-    // API Lấy số liệu Thống kê cho Homepage
-    // URL: GET /api/doctor/dashboard-stats
-    Route::get('/dashboard-stats', [DoctorDashboardController::class, 'index']);
-    // API Bác sĩ Xóa (khóa) một slot rảnh
-    // URL: DELETE /api/doctor/availability/{id}
-    Route::delete('/availability/{id}', [DoctorAvailabilityController::class, 'destroy']);
-    // API Bác sĩ xem chi tiết 1 lịch hẹn
-    // URL: GET /api/doctor/appointments/{id}
-    Route::get('/appointments/{id}', [AppointmentController::class, 'doctorShowAppointment']);
-    // API Bác sĩ tải file kết quả (X-quang...) lên 1 Bệnh án
-    // {id} là ID của Bệnh án (MedicalRecordID)
-    // URL: POST /api/doctor/medical-records/{id}/upload-result
-    Route::post('/medical-records/{id}/upload-result', [MedicalRecordController::class, 'uploadResult']);
-    // API Bác sĩ xem lại các bệnh án đã tạo
-    // URL: GET /api/doctor/my-medical-records
-    Route::get('/my-medical-records', [MedicalRecordController::class, 'myMedicalRecords']);
-    // API Bác sĩ xem lịch sử của 1 bệnh nhân
-    // {patientId} là UserID của Bệnh nhân
-    // URL: GET /api/doctor/patient-history/{patientId}
-    Route::get('/patient-history/{patientId}', [MedicalRecordController::class, 'getPatientHistory']);
-    // API Bác sĩ Sửa bệnh án
-    // URL: PUT /api/doctor/medical-records/{id}
-    Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update']);
-    //API cập nhật trạng thái (Bắt đầu khám -> Hoàn tất)
-    Route::put('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
-    //API xem danh sách Slot rảnh của chính bác sĩ đó
-    Route::get('/my-slots', [DoctorAvailabilityController::class, 'index']);
-});
+        // API Lấy hàng đợi (queue) - những người đã "CheckedIn"
+        Route::get('/queue', [AppointmentController::class, 'getDoctorQueue']);
+        // API Lấy số liệu Thống kê cho Homepage
+        Route::get('/dashboard-stats', [DoctorDashboardController::class, 'index']);
+        // API Bác sĩ Xóa (khóa) một slot rảnh
+        Route::delete('/availability/{id}', [DoctorAvailabilityController::class, 'destroy']);
+        // API Bác sĩ xem chi tiết 1 lịch hẹn
+        Route::get('/appointments/{id}', [AppointmentController::class, 'doctorShowAppointment']);
+        // API Bác sĩ tải file kết quả (X-quang...) lên 1 Bệnh án
+        Route::post('/medical-records/{id}/upload-result', [MedicalRecordController::class, 'uploadResult']);
+        // API Bác sĩ xem lại các bệnh án đã tạo
+        Route::get('/my-medical-records', [MedicalRecordController::class, 'myMedicalRecords']);
+        // API Bác sĩ xem lịch sử của 1 bệnh nhân
+        Route::get('/patient-history/{patientId}', [MedicalRecordController::class, 'getPatientHistory']);
+        // API Bác sĩ Sửa bệnh án
+        Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update']);
+        //API cập nhật trạng thái (Bắt đầu khám -> Hoàn tất)
+        Route::put('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
+        //API xem danh sách Slot rảnh của chính bác sĩ đó
+        Route::get('/my-slots', [DoctorAvailabilityController::class, 'index']);
+    });
 
 //nhom4 admin
 Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin')->group(function () {
@@ -222,54 +207,41 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
 
 //STAFF (Nhân Viên)
 // Yêu cầu: Đã đăng nhập VÀ (Role là 'NhanVien' HOẶC 'QuanTriVien')
-// (Chúng ta cho cả Admin vào group này để Admin cũng test được)
 Route::middleware(['auth:sanctum', 'role:NhanVien,QuanTriVien'])->prefix('staff')->group(function () {
 
-    // Yêu cầu 1: Lấy số liệu thống kê
-    // GET /api/staff/dashboard-stats
+    //Lấy số liệu thống kê
     Route::get('/dashboard-stats', [StaffDashboardController::class, 'index']);
 
-    // Yêu cầu 2: Lấy lịch hẹn chờ xác nhận
-    // GET /api/staff/pending-appointments
+    //Lấy lịch hẹn chờ xác nhận
     Route::get('/pending-appointments', [AppointmentController::class, 'getPendingAppointments']);
 
-    // Yêu cầu 3: Lấy phản hồi (feedback)
+    //Lấy phản hồi (feedback)
     // (Dùng chung API với Admin)
-    // GET /api/staff/feedbacks
     Route::get('/feedbacks', [FeedbackController::class, 'index']);
 
-    // Yêu cầu 4: Lấy danh sách TẤT CẢ lịch hẹn
+    //Lấy danh sách TẤT CẢ lịch hẹn
     // (Dùng chung API với Admin)
-    // GET /api/staff/all-appointments
     Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
 
-    // Yêu cầu 5: Tạo lịch hẹn mới (thay mặt bệnh nhân)
-    // POST /api/staff/appointments
+    //Tạo lịch hẹn mới (thay mặt bệnh nhân)
     Route::post('/appointments', [AppointmentController::class, 'staffCreateAppointment']);
 
-    // Yêu cầu 6: Cập nhật trạng thái (Pending -> Confirmed)
-    // PATCH /api/staff/appointments/{id}/confirm
+    //Cập nhật trạng thái (Pending -> Confirmed)
     Route::patch('/appointments/{id}/confirm', [AppointmentController::class, 'confirmAppointment']);
 
-    // Yêu cầu 7: Cập nhật/sửa thông tin chi tiết lịch hẹn
-    // PUT /api/staff/appointments/{id}
+    //Cập nhật/sửa thông tin chi tiết lịch hẹn
     Route::put('/appointments/{id}', [AppointmentController::class, 'staffUpdateAppointment']);
 
-    // Yêu cầu 8: Hủy lịch (bonus)
-    // PATCH /api/staff/appointments/{id}/cancel
+    //Hủy lịch (bonus)
     Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'staffCancelAppointment']);
 
-    // Yêu cầu 9: Thêm slot rảnh mới cho bác sĩ
-    // POST /api/staff/availability
+    //Thêm slot rảnh mới cho bác sĩ
     Route::post('/availability', [DoctorAvailabilityController::class, 'staffStore']);
 
-    // Yêu cầu 10: Xóa slot rảnh của bác sĩ
-    // DELETE /api/staff/availability/{id}
+    //Xóa slot rảnh của bác sĩ
     Route::delete('/availability/{id}', [DoctorAvailabilityController::class, 'staffDestroy']);
     // API để Staff "Check-in" cho Bệnh nhân khi họ đến
-    // URL sẽ là: PATCH /api/staff/appointments/{id}/check-in
     Route::patch('/appointments/{id}/check-in', [AppointmentController::class, 'checkInAppointment']);
     // API để Staff Sửa một slot rảnh
-    // URL sẽ là: PUT /api/staff/availability/{id}
     Route::put('/availability/{id}', [DoctorAvailabilityController::class, 'staffUpdate']);
 });

@@ -28,7 +28,6 @@ class NotificationController extends Controller
 
     /**
      * Gửi thông báo mới (Hàng loạt).
-     * POST /api/admin/notifications/send
      */
     public function send(Request $request)
     {
