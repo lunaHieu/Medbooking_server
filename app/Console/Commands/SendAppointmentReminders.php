@@ -12,7 +12,7 @@ class SendAppointmentReminders extends Command
      *
      * @var string
      */
-    protected $signature = 'app:send-appointments';
+    protected $signature = 'app:remind-appointments';
 
     /**
      * The console command description.
@@ -28,7 +28,7 @@ class SendAppointmentReminders extends Command
     {
         $tomorrow = Carbon::tomorrow();
         $appointments = Appointment::whereDate('StartTime', $tomorrow)
-            ->where('Status', 'Confirmed')
+            ->where('Status', ['Confirmed', 'Pending'])
             ->with(['doctor.user', 'patient'])
             ->get();
         $count = 0;
@@ -36,7 +36,7 @@ class SendAppointmentReminders extends Command
             $doctorName = $appt->doctor && $appt->doctor->user ? $appt->doctor->user->FullName : 'Bác sĩ';
             $time = Carbon::parse($appt->StartTime)->format('H:i');
             $title = "Nhắc nhở lịch khám";
-            $content = "Bạn có lịch khám với $doctorName vào lúc $time ngày mai.";
+            $content = "Bạn có lịch khám với BS.$doctorName vào lúc $time ngày mai.";
             $exists = Notification::where('UserID', $appt->PatientID)
                 ->where('Content', $content)
                 ->exists();

@@ -78,18 +78,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-notifications', [NotificationController::class, 'getMyNotifications']);
     //đã đọc
     Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
 });
 
 // --- CÁC ROUTE KHÔNG BẢO VỆ (Ai cũng có thể gọi được) ---
-// 2. Định nghĩa route đầu tiên của chúng ta
-// Khi ai đó gọi GET /api/specialties...
-// ...hãy chạy hàm 'index' trong SpecialtyController
 Route::get('/specialties', [SpecialtyController::class, 'index']);
 
-// 2. Route cho Đăng ký (Register)
+//Route cho Đăng ký (Register)
 Route::post('/register', [AuthController::class, 'register']);
 
-// 3. Route cho Đăng nhập (Login)
+//Route cho Đăng nhập (Login)
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/doctors', [DoctorController::class, 'index']);
@@ -165,30 +163,27 @@ Route::middleware(['auth:sanctum', 'role:BacSi'])->prefix('doctor')->group(funct
 Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin')->group(function () {
 
     // API để Admin tạo Bác sĩ mới
-    // URL sẽ là: POST /api/admin/doctors
     Route::post('/doctors', [DoctorManagementController::class, 'store']);
-
 
     //api update bac si
     Route::put('/doctors/{id}', [DoctorManagementController::class, 'update']);
 
     // API để Admin xem tất cả Lịch hẹn
-    // URL sẽ là: GET /api/admin/appointments
     Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
 
     //api de admin tai anh len cho bac si
-    // URL sẽ là: POST /api/admin/doctors/{id}/upload-image
     Route::post('/doctors/{id}/upload-image', [DoctorManagementController::class, 'uploadImage']);
     // API để Admin Xóa Bác sĩ
-    // URL sẽ là: DELETE /api/admin/doctors/{id}
     Route::delete('/doctors/{id}', [DoctorManagementController::class, 'destroy']);
     // API để Admin Xóa Bệnh án
-    // URL sẽ là: DELETE /api/admin/medical-records/{id}
     Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy']);
 
     //QUẢN LÝ THÔNG BÁO
     Route::get('/notifications', [AdminNotificationController::class, 'index']);
     Route::post('/notifications/send', [AdminNotificationController::class, 'send']);
+    Route::delete('/notifications/{id}', [AdminNotificationController::class, 'destroy']);
+    Route::delete('/notifications/delete-all', [AdminNotificationController::class, 'destroyAll']);
+    Route::post('/notifications/trigger-reminders', [AdminNotificationController::class, 'triggerReminders']);
     // Route cho bệnh nhân xem kết quả
     Route::get('/appointments/{id}/medical-record', [AppointmentController::class, 'getMedicalRecord']);
 
@@ -206,22 +201,17 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     Route::post('/services', [AdminServiceController::class, 'store']);
     Route::put('/services/{id}', [AdminServiceController::class, 'update']);
     Route::delete('/services/{id}', [AdminServiceController::class, 'destroy']);
-    //API cho Staff va admin co the dung
-    // Yêu cầu 11: Tìm kiếm bệnh nhân khi tạo lịch
-    // GET /api/admin/patients (Staff có thể dùng API này)
+    // Tìm kiếm bệnh nhân khi tạo lịch (Staff cũng dùng)
     Route::get('/patients', [PatientController::class, 'index']);
     Route::get('/patients/{id}', [PatientController::class, 'show']);
     Route::get('/patients/{id}/history', [PatientController::class, 'getHistory']);
     Route::put('/patients/{id}', [PatientController::class, 'update']);
-    // === API QUẢN LÝ BỆNH ÁN (MỚI) ===
-    // 1. Lấy danh sách / Tìm kiếm Bệnh án
-    // URL: GET /api/admin/medical-records
+    //API QUẢN LÝ BỆNH ÁN
+    //Lấy danh sách / Tìm kiếm Bệnh án
     Route::get('/medical-records', [MedicalRecordController::class, 'index']);
 
-    // 2. Lấy chi tiết 1 Bệnh án
-    // URL: GET /api/admin/medical-records/{id}
+    //Lấy chi tiết 1 Bệnh án
     Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
-    // (API Tạo/Sửa Patient chúng ta giữ cho Admin)
     // Quản lý Chuyên khoa
     Route::post('/specialties', [AdminSpecialtyController::class, 'store']);
     Route::put('/specialties/{id}', [AdminSpecialtyController::class, 'update']);

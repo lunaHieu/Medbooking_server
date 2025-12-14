@@ -116,41 +116,39 @@ class AuthController extends Controller
     }
 
     /**
-     * HÀM MỚI: User (Bệnh nhân) tải ảnh đại diện.
-     * Chạy khi gọi POST /api/user/upload-avatar
+     * Bệnh nhân tải ảnh đại diện.
      */
     public function uploadAvatar(Request $request)
     {
-        // 1. Validate (Kiểm tra) file gửi lên
+        //Validate (Kiểm tra) file gửi lên
         $request->validate([
             // 'avatar' là tên 'Key' chúng ta sẽ dùng trong Postman
             'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048' // Tối đa 2MB
         ]);
 
-        // 2. Lấy user đang đăng nhập
+        //Lấy user đang đăng nhập
         $user = $request->user();
 
-        // 3. Xóa ảnh cũ (nếu có) để tránh rác
+        //Xóa ảnh cũ (nếu có) để tránh rác
         if ($user->avatar_url) {
             Storage::disk('public')->delete($user->avatar_url);
         }
 
-        // 4. Lưu ảnh mới vào 'storage/app/public/uploads/avatars'
-        // 'store' sẽ tự động tạo tên file ngẫu nhiên, an toàn
+        //Lưu ảnh mới vào 'storage/app/public/uploads/avatars'
         $path = $request->file('avatar')->store('uploads/avatars', 'public');
 
-        // 5. Cập nhật đường dẫn MỚI vào bảng 'users'
+        //Cập nhật đường dẫn MỚI vào bảng 'users'
         $user->avatar_url = $path;
         $user->save();
 
-        // 6. Trả về thông tin user đã cập nhật
+        //Trả về thông tin user đã cập nhật
         return response()->json([
             'message' => 'Tải ảnh đại diện thành công!',
             'user' => $user
         ], 200);
     }
     /**
-     * HÀM MỚI: User tự cập nhật thông tin cá nhân
+     * User tự cập nhật thông tin cá nhân
      */
     public function updateProfile(Request $request)
     {
@@ -161,10 +159,9 @@ class AuthController extends Controller
             'DateOfBirth' => 'nullable|date',
             'Gender' => 'nullable|string',
             'Address' => 'nullable|string',
-            // Validate Email & Phone: Unique nhưng bỏ qua chính mình
             'Email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('users')->ignore($user->UserID, 'UserID')],
             'PhoneNumber' => ['required', 'string', \Illuminate\Validation\Rule::unique('users')->ignore($user->UserID, 'UserID')],
-            // 'avatar_url' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'avatar_url' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         // Cập nhật (chỉ các trường cho phép)
@@ -254,5 +251,35 @@ class AuthController extends Controller
         })->values();
 
         return response()->json($users);
+    }
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|min:6|confirmed',
+        ], [
+            'current_password.required' => 'Vui lòng nhập mật khẩu hiện tại.',
+            'new_password.required' => 'Vui lòng nhập mật khẩu mới.',
+            'new_password.min' => 'Mật khẩu mới phải có ít nhất 6 ký tự.',
+            'new_password.confirmed' => 'Xác nhận mật khẩu mới không khớp.',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mật khẩu hiện tại không chính xác.'
+            ], 400);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->new_password)
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đổi mật khẩu thành công!'
+        ]);
     }
 }
