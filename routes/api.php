@@ -11,6 +11,13 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\DoctorAvailabilityController;
 use App\Http\Controllers\Api\MedicalRecordController;
 use App\Http\Controllers\Api\ServiceController;
+<<<<<<< HEAD
+=======
+use App\Http\Controllers\Api\Admin\FeedbackController;
+
+
+// Doctor Controllers
+>>>>>>> tung-feature-doctor-dashboard
 use App\Http\Controllers\Api\Doctor\DashboardController as DoctorDashboardController;
 
 use App\Http\Controllers\Api\Admin\DoctorManagementController;
@@ -35,8 +42,86 @@ use App\Http\Controllers\Api\NotificationController;
 |
 */
 
+<<<<<<< HEAD
 //route benh nhan (patient)
 // CÁC ROUTE ĐƯỢC BẢO VỆ 
+=======
+// =======================================================
+// PUBLIC TEST ROUTES 
+// =======================================================
+Route::get('/test-public', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'Public API is working!',
+        'timestamp' => now()->format('Y-m-d H:i:s'),
+        'endpoints' => [
+            '/api/test-public',
+            '/api/doctor/test-public',
+            '/api/login',
+            '/api/register',
+        ],
+    ]);
+});
+
+Route::get('/doctor/test-public', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'Doctor public test route works!',
+        'timestamp' => now()->format('Y-m-d H:i:s'),
+        'data' => [
+            'doctor_routes' => [
+                '/api/doctor/dashboard',
+                '/api/doctor/dashboard-stats',
+                '/api/doctor/my-schedule',
+                '/api/doctor/schedule',
+                '/api/doctor/queue',
+                '/api/doctor/profile',
+            ],
+        ],
+    ]);
+});
+
+// =======================================================
+// PUBLIC ROUTES 
+// =======================================================
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::get('/specialties', [SpecialtyController::class, 'index']);
+Route::get('/specialties/{id}', [SpecialtyController::class, 'show']);
+Route::get('/specialties/{id}/availability', [SpecialtyController::class, 'getAvailability']);
+
+Route::get('/doctors', [DoctorController::class, 'index']);
+Route::get('/doctors/{id}', [DoctorController::class, 'show']);
+Route::get('/doctors/{id}/availability', [DoctorController::class, 'getAvailability']);
+
+Route::get('/services', [ServiceController::class, 'index']);
+Route::get('/services/{id}', [ServiceController::class, 'show']);
+
+// =======================================================
+// HEALTH CHECK
+// =======================================================
+Route::get('/health', function () {
+    $db = 'unknown';
+    try {
+        DB::connection()->getPdo();
+        $db = 'connected';
+    } catch (\Throwable $e) {
+        $db = 'disconnected';
+    }
+
+    return response()->json([
+        'status' => 'healthy',
+        'service' => 'Medbooking API',
+        'version' => '1.0.0',
+        'timestamp' => now()->format('Y-m-d H:i:s'),
+        'database' => $db,
+    ]);
+});
+
+// =======================================================
+// PROTECTED ROUTES 
+// =======================================================
+>>>>>>> tung-feature-doctor-dashboard
 Route::middleware('auth:sanctum')->group(function () {
     //route GET /api/users
     Route::get('/user', function (Request $request) {
@@ -67,6 +152,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // API để Bệnh nhân tự tải ảnh đại diện
     Route::post('/user/upload-avatar', [AuthController::class, 'uploadAvatar']);
 
+<<<<<<< HEAD
     //Quản lí gia đình
     Route::get('user/family-members', [AuthController::class, 'getFamilyMembers']);
     Route::post('/user/family-members', [AuthController::class, 'addFamilyMembers']);
@@ -79,6 +165,34 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
     Route::delete('/notifications/delete-all', [NotificationController::class, 'destroyAll']);
 });
+=======
+    // ===================================================
+    // BÁC SĨ 
+    // ===================================================
+    Route::middleware('role:BacSi')->prefix('doctor')->group(function () {
+
+        // DASHBOARD
+        Route::get('/dashboard', [DoctorDashboardController::class, 'index']);
+        Route::get('/dashboard-stats', [DoctorDashboardController::class, 'index']);
+
+        // SCHEDULE
+        Route::get('/my-schedule', [ScheduleController::class, 'index']);
+        Route::get('/schedule', [AppointmentController::class, 'getSchedule']);
+
+        // QUEUE
+        Route::get('/queue', [QueueController::class, 'index']);
+
+        // ✅ PROFILE - ENDPOINT QUAN TRỌNG
+       Route::get('/profile', [DoctorController::class, 'getProfile']);
+Route::put('/profile', [DoctorController::class, 'updateProfile']);
+
+
+
+        Route::patch('/appointments/{id}/status',
+    [AppointmentController::class, 'updateStatus']
+);
+
+>>>>>>> tung-feature-doctor-dashboard
 
 //CÁC ROUTE KHÔNG BẢO VỆ (Ai cũng có thể gọi được)
 Route::get('/specialties', [SpecialtyController::class, 'index']);
@@ -154,8 +268,22 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     //api update bac si
     Route::put('/doctors/{id}', [DoctorManagementController::class, 'update']);
 
+<<<<<<< HEAD
     // API để Admin xem tất cả Lịch hẹn
     Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
+=======
+        Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
+        Route::get('/patients', [PatientController::class, 'index']);
+        Route::get('/patients/{id}', [PatientController::class, 'show']);
+        Route::get('/medical-records', [MedicalRecordController::class, 'index']);
+        Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
+
+        Route::get('/users', [PatientController::class, 'index']); 
+    Route::get('/users/{id}', [PatientController::class, 'show']);
+    Route::get('/services', [AdminServiceController::class, 'index']);
+      Route::get('/feedbacks', [FeedbackController::class, 'index']);
+    });
+>>>>>>> tung-feature-doctor-dashboard
 
     //api de admin tai anh len cho bac si
     Route::post('/doctors/{id}/upload-image', [DoctorManagementController::class, 'uploadImage']);
@@ -205,6 +333,7 @@ Route::middleware(['auth:sanctum', 'role:QuanTriVien,NhanVien'])->prefix('admin'
     Route::get('/feedbacks', [FeedbackController::class, 'index']);
 });
 
+<<<<<<< HEAD
 
 //STAFF (Nhân Viên)
 // Yêu cầu: Đã đăng nhập VÀ (Role là 'NhanVien' HOẶC 'QuanTriVien')
@@ -245,4 +374,37 @@ Route::middleware(['auth:sanctum', 'role:NhanVien,QuanTriVien'])->prefix('staff'
     Route::patch('/appointments/{id}/check-in', [AppointmentController::class, 'checkInAppointment']);
     // API để Staff Sửa một slot rảnh
     Route::put('/availability/{id}', [DoctorAvailabilityController::class, 'staffUpdate']);
+=======
+// =======================================================
+// TEST ROUTES
+// =======================================================
+Route::prefix('test')->group(function () {
+    Route::get('/doctor-dashboard-stats', [DoctorDashboardController::class, 'testData']);
+
+    Route::get('/queue-test', [QueueController::class, 'testData']);
+    
+    Route::get('/my-medical-records-test', function () {
+        return response()->json([
+            'success' => true,
+            'message' => 'Medical records test data',
+            'timestamp' => now()->format('Y-m-d H:i:s'),
+            'data' => [
+                [
+                    'id' => 1,
+                    'patientName' => "Trần Thị Lan",
+                    'age' => 34,
+                    'diagnosis' => "Viêm họng cấp do virus",
+                    'treatment' => "Kháng sinh 5 ngày, nghỉ ngơi, uống nhiều nước, hạ sốt khi cần",
+                    'prescriptions' => [
+                        ['medicine' => "Amoxicillin", 'dosage' => "500mg", 'frequency' => "3 lần/ngày"],
+                        ['medicine' => "Paracetamol", 'dosage' => "500mg", 'frequency' => "Khi sốt >38.5°C"],
+                    ],
+                    'tests' => ["Xét nghiệm máu", "Ngoáy họng", "CRP"],
+                    'date' => "2025-04-02",
+                    'status' => "completed",
+                ],
+            ],
+        ]);
+    });
+>>>>>>> tung-feature-doctor-dashboard
 });

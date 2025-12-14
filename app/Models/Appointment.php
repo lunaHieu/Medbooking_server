@@ -1,10 +1,17 @@
 <?php
+namespace App\Models;
 
+<<<<<<< HEAD
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+=======
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+>>>>>>> tung-feature-doctor-dashboard
 class Appointment extends Model
 {
     use HasFactory;

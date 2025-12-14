@@ -57,6 +57,7 @@ class AuthController extends Controller
      * Xử lý yêu cầu Đăng nhập (Login).
      */
     public function login(Request $request)
+<<<<<<< HEAD
     {
         // 1. Validate (Kiểm tra) dữ liệu đầu vào
         $request->validate([
@@ -101,6 +102,48 @@ class AuthController extends Controller
     /**
      * Xử lý yêu cầu Đăng xuất (Logout).
      */
+=======
+{
+    $request->validate([
+        'email' => 'required|string',
+        'password' => 'required|string',
+    ]);
+
+    // email FE chính là Username
+    $user = \App\Models\User::where('Username', $request->email)->first();
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'Tài khoản không tồn tại'
+        ], 401);
+    }
+
+    if (!Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'message' => 'Sai mật khẩu'
+        ], 401);
+    }
+
+    // login thủ công
+    Auth::login($user);
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'access_token' => $token,
+        'token_type' => 'Bearer',
+        'user' => [
+            'UserID' => $user->UserID,
+            'FullName' => $user->FullName,
+            'Username' => $user->Username,
+            'Role' => $user->Role,
+        ]
+    ]);
+}
+
+
+
+>>>>>>> tung-feature-doctor-dashboard
     public function logout(Request $request)
     {
         //lay thong tin dang nhap cua user
