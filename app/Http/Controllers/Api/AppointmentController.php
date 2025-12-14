@@ -403,27 +403,28 @@ class AppointmentController extends Controller
     public function getPendingAppointments(Request $request)
 {
     try {
-        $appointments = Appointment::with([
-                'patient' => function($query) {
-                    $query->select('UserID', 'FullName', 'PhoneNumber', 'Email', 'DateOfBirth', 'Gender');
-                },
-                'doctor.user' => function($query) {
-                    $query->select('UserID', 'FullName');
-                },
-                'service' => function($query) {
-                    $query->select('ServiceID', 'ServiceName');
-                }
-            ])
-            ->where('Status', 'Pending')
-            ->orderBy('StartTime', 'asc')
-            ->get();
-
-        return response()->json($appointments, 200);
+        // Kiểm tra xem class có tồn tại không
+        if (!class_exists('App\Models\Appointment')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Appointment model not found'
+            ], 500);
+        }
+        
+        // Lấy appointments pending
+        $appointments = \App\Models\Appointment::where('Status', 'Pending')->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $appointments,
+            'count' => $appointments->count()
+        ]);
         
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'message' => $e->getMessage()
+            'message' => 'Error: ' . $e->getMessage(),
+            'trace' => env('APP_DEBUG') ? $e->getTraceAsString() : null
         ], 500);
     }
 }
@@ -510,38 +511,34 @@ class AppointmentController extends Controller
     /**
      * Cập nhật trạng thái lịch hẹn(CheckedIn -> InProgress -> Completed)
      */
-    public function updateStatus(Request $request, $id)
+  public function updateStatus(Request $request, $id)
     {
         $request->validate([
             'Status' => 'required|in:InProgress,Completed,Cancelled'
         ]);
+
         $user = $request->user();
-        //Tìm lịch hẹn phải đúng là của bác sĩ A
-        $appointment = Appointment::where('AppoinmentID', $id)
-            ->where('DoctorID', $user->doctor->DoctorID)
+        $doctor = $user->doctorProfile; 
+
+        if (!$doctor) {
+            return response()->json(['message' => 'Chỉ bác sĩ mới được thực hiện hành động này.'], 403);
+        }
+
+        $appointment = Appointment::where('AppointmentID', $id)
+            ->where('DoctorID', $doctor->DoctorID)
             ->first();
+
         if (!$appointment) {
             return response()->json(['message' => 'Lịch hẹn không tồn tại hoặc bạn không có quyền.'], 404);
         }
 
-        //Cập nhật trạng thái
-        $oldStatus = $appointment->Status;
         $appointment->Status = $request->Status;
         $appointment->save();
 
-public function updateStatus(Request $request, $id)
-{
-    $request->validate([
-        'Status' => 'required|in:confirmed,in_progress,completed,cancelled'
-    ]);
-
-    $appointment = Appointment::findOrFail($id);
-    $appointment->Status = $request->Status;
-    $appointment->save();
-
-    return response()->json([
-        'success' => true,
-        'data' => $appointment
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật trạng thái thành công!',
+            'data' => $appointment
+        ]);
     }
+}

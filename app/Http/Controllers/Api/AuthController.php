@@ -48,28 +48,39 @@ class AuthController extends Controller
         'email' => 'required|string',
         'password' => 'required|string',
     ]);
-    
-    $user = User::where('Email', $request->email)
-                ->orWhere('Username', $request->email)
-                ->first();
-    
+
+    // email FE chính là Username
+    $user = \App\Models\User::where('Username', $request->email)->first();
+
     if (!$user) {
-        return response()->json(['message' => 'Sai tài khoản hoặc mật khẩu'], 401);
+        return response()->json([
+            'message' => 'Tài khoản không tồn tại'
+        ], 401);
     }
-    
-    // PHẢI CÓ DÒNG NÀY
+
     if (!Hash::check($request->password, $user->password)) {
-        return response()->json(['message' => 'Sai tài khoản hoặc mật khẩu'], 401);
+        return response()->json([
+            'message' => 'Sai mật khẩu'
+        ], 401);
     }
-    
+
+    // login thủ công
+    Auth::login($user);
+
     $token = $user->createToken('auth_token')->plainTextToken;
-    
+
     return response()->json([
-        'success' => true,
-        'user' => $user->toApiArray(),
         'access_token' => $token,
-    ], 200);
+        'token_type' => 'Bearer',
+        'user' => [
+            'UserID' => $user->UserID,
+            'FullName' => $user->FullName,
+            'Username' => $user->Username,
+            'Role' => $user->Role,
+        ]
+    ]);
 }
+
 
 
     public function logout(Request $request)
