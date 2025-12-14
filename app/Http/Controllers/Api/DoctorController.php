@@ -150,4 +150,25 @@ class DoctorController extends Controller
 
         return response()->json(['message' => 'Xóa bác sĩ thành công']);
     }
+    public function getProfile(Request $request)
+    {
+        $userId = $request->user()->UserID;
+
+        $userWithDoctorInfo = User::with(['doctor.specialty'])
+            ->where('UserID', $userId)
+            ->first();
+
+        if (!$userWithDoctorInfo) {
+            return response()->json(['message' => 'Không tìm thấy người dùng'], 404);
+        }
+
+        if (!$userWithDoctorInfo->doctor) {
+            return response()->json(['message' => 'Tài khoản này chưa cập nhật hồ sơ bác sĩ'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $userWithDoctorInfo
+        ]);
+    }
 }

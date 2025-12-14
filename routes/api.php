@@ -142,6 +142,7 @@ Route::middleware(['auth:sanctum', 'role:BacSi'])
         Route::put('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
         //API xem danh sách Slot rảnh của chính bác sĩ đó
         Route::get('/my-slots', [DoctorAvailabilityController::class, 'index']);
+        Route::get('/profile', [DoctorController::class, 'getProfile']);
     });
 
 //nhom4 admin
