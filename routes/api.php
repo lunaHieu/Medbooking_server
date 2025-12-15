@@ -13,22 +13,19 @@ use App\Http\Controllers\Api\DoctorAvailabilityController;
 use App\Http\Controllers\Api\MedicalRecordController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\Admin\FeedbackController;
-use App\Http\Controllers\Api\Admin\NotificationController;
+use App\Http\Controllers\Api\Admin\NotificationController as AdminNotificationController;
+use App\Http\Controllers\Api\NotificationController;
 
-
-// Doctor Controllers
 use App\Http\Controllers\Api\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Api\Doctor\ScheduleController;
 use App\Http\Controllers\Api\Doctor\QueueController;
 
-// Admin Controllers
 use App\Http\Controllers\Api\Admin\DoctorManagementController;
 use App\Http\Controllers\Api\Admin\AppointmentManagementController;
 use App\Http\Controllers\Api\Admin\SpecialtyController as AdminSpecialtyController;
 use App\Http\Controllers\Api\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Api\Admin\PatientController;
 
-// Staff Controllers
 use App\Http\Controllers\Api\Staff\DashboardController as StaffDashboardController;
 
 // =======================================================
@@ -156,7 +153,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/system-feedback', [AppointmentController::class, 'submitSystemFeedback']);
     Route::put('/user/profile', [AuthController::class, 'updateProfile']);
     Route::post('/user/upload-avatar', [AuthController::class, 'uploadAvatar']);
-
+    //Quản lí gia đình
+    Route::get('user/family-members', [AuthController::class, 'getFamilyMembers']);
+    Route::post('/user/family-members', [AuthController::class, 'addFamilyMembers']);
+    Route::delete('user/family-members/{id}', [AuthController::class, 'removeFamilyMember']);
+    Route::get('/users/search-public', [AuthController::class, 'searchUserPublic']);
+    //Tự gọi bác sĩ của mình
+    Route::get('/my-doctors', [AppointmentController::class, 'getMyDoctors']);
+    //Xem thông báo
+    Route::get('/my-notifications', [NotificationController::class, 'getMyNotifications']);
+    //đã đọc
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('/notifications/delete-all', [NotificationController::class, 'destroyAll']);
     // ===================================================
     // BÁC SĨ 
     // ===================================================
@@ -174,14 +183,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/queue', [QueueController::class, 'index']);
 
         // ✅ PROFILE - ENDPOINT QUAN TRỌNG
-       Route::get('/profile', [DoctorController::class, 'getProfile']);
-Route::put('/profile', [DoctorController::class, 'updateProfile']);
+        Route::get('/profile', [DoctorController::class, 'getProfile']);
+        Route::put('/profile', [DoctorController::class, 'updateProfile']);
 
 
 
-        Route::patch('/appointments/{id}/status',
-    [AppointmentController::class, 'updateStatus']
-);
+        Route::patch(
+            '/appointments/{id}/status',
+            [AppointmentController::class, 'updateStatus']
+        );
 
 
         // MEDICAL RECORDS
@@ -220,30 +230,30 @@ Route::put('/profile', [DoctorController::class, 'updateProfile']);
         Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
         Route::get('/patients', [PatientController::class, 'index']);
         Route::get('/patients/{id}', [PatientController::class, 'show']);
-         Route::put('/patients/{id}', [PatientController::class, 'update']);
+        Route::put('/patients/{id}', [PatientController::class, 'update']);
         Route::get('/medical-records', [MedicalRecordController::class, 'index']);
         Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
         Route::get('/patients/{id}/history', [PatientController::class, 'patientHistory']);
 
-        Route::get('/users', [PatientController::class, 'index']); 
-    Route::get('/users/{id}', [PatientController::class, 'show']);
-    Route::get('/services', [AdminServiceController::class, 'index']);
-      Route::get('/feedbacks', [FeedbackController::class, 'index']);
+        Route::get('/users', [PatientController::class, 'index']);
+        Route::get('/users/{id}', [PatientController::class, 'show']);
+        Route::get('/services', [AdminServiceController::class, 'index']);
+        Route::get('/feedbacks', [FeedbackController::class, 'index']);
 
-      Route::get('/notifications', [NotificationController::class, 'index']);
-Route::post('/notifications/send', [NotificationController::class, 'send']);
-Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
-Route::post(
-    '/notifications/trigger-reminders',
-    [NotificationController::class, 'triggerReminders']
-);
+        Route::get('/notifications', [AdminNotificationController::class, 'index']);
+        Route::post('/notifications/send', [AdminNotificationController::class, 'send']);
+        Route::delete('/notifications/{id}', [AdminNotificationController::class, 'destroy']);
+        Route::post(
+            '/notifications/trigger-reminders',
+            [AdminNotificationController::class, 'triggerReminders']
+        );
 
     });
 
     // ===================================================
     // STAFF ONLY
     // ===================================================
-    Route::middleware('role:NhanVien')->prefix('staff')->group(function () {
+    Route::middleware('role:NhanVien,QuanTriVien')->prefix('staff')->group(function () {
         Route::get('/dashboard-stats', [StaffDashboardController::class, 'index']);
         Route::get('/pending-appointments', [AppointmentController::class, 'getPendingAppointments']);
         Route::post('/appointments', [AppointmentController::class, 'staffCreateAppointment']);
@@ -264,7 +274,7 @@ Route::prefix('test')->group(function () {
     Route::get('/doctor-dashboard-stats', [DoctorDashboardController::class, 'testData']);
 
     Route::get('/queue-test', [QueueController::class, 'testData']);
-    
+
     Route::get('/my-medical-records-test', function () {
         return response()->json([
             'success' => true,

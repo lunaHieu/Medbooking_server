@@ -253,6 +253,7 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
 
         if ($appointment->Status !== 'Pending') {
+
             return response()->json(['message' => 'Lịch hẹn này đã được xử lý (không ở trạng thái "Pending").'], 422);
         }
         $appointment->Status = 'Confirmed';
@@ -395,40 +396,6 @@ class AppointmentController extends Controller
         // 3. Trả về JSON
         return response()->json($queue, 200, [], JSON_UNESCAPED_UNICODE);
     }
-    /**
-     * HÀM MỚI (Doctor): Lấy chi tiết 1 lịch hẹn.
-     * Chạy khi gọi GET /api/doctor/appointments/{id}
-     */
-
-    public function getPendingAppointments(Request $request)
-{
-    try {
-        // Kiểm tra xem class có tồn tại không
-        if (!class_exists('App\Models\Appointment')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Appointment model not found'
-            ], 500);
-        }
-        
-        // Lấy appointments pending
-        $appointments = \App\Models\Appointment::where('Status', 'Pending')->get();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $appointments,
-            'count' => $appointments->count()
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error: ' . $e->getMessage(),
-            'trace' => env('APP_DEBUG') ? $e->getTraceAsString() : null
-        ], 500);
-    }
-}
-
     public function doctorShowAppointment(Request $request, $id)
     {
         $doctor = $request->user()->doctorProfile;
@@ -445,6 +412,23 @@ class AppointmentController extends Controller
 
         // 2. Trả về chi tiết
         return response()->json($appointment, 200, [], JSON_UNESCAPED_UNICODE);
+    }
+    public function getPendingAppointments(Request $request)
+    {
+
+        $appointments = Appointment::with([
+            'patient',
+            'doctor.user',
+            'doctor.specialty'
+        ])
+            ->where('Status', 'Pending')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $appointments
+        ]);
     }
     /**
      * HÀM MỚI: Bệnh nhân gửi đánh giá sau khi khám
@@ -511,14 +495,14 @@ class AppointmentController extends Controller
     /**
      * Cập nhật trạng thái lịch hẹn(CheckedIn -> InProgress -> Completed)
      */
-  public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, $id)
     {
         $request->validate([
             'Status' => 'required|in:InProgress,Completed,Cancelled'
         ]);
 
         $user = $request->user();
-        $doctor = $user->doctorProfile; 
+        $doctor = $user->doctorProfile;
 
         if (!$doctor) {
             return response()->json(['message' => 'Chỉ bác sĩ mới được thực hiện hành động này.'], 403);

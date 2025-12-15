@@ -21,10 +21,10 @@ class PatientController extends Controller
 
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('FullName', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('PhoneNumber', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('Username', 'like', '%' . $searchTerm . '%');
+                    ->orWhere('PhoneNumber', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('Username', 'like', '%' . $searchTerm . '%');
             });
         }
 
@@ -47,33 +47,32 @@ class PatientController extends Controller
      * GET /api/admin/patients/{id}/history
      */
     public function getHistory($id)
-{
-    $patient = User::where('Role', 'BenhNhan')->findOrFail($id);
+    {
+        $patient = User::where('Role', 'BenhNhan')->findOrFail($id);
 
-    $history = $patient->appointmentsAsPatient()
-        ->with(['doctor.user', 'medicalRecord'])
-        ->orderBy('StartTime', 'desc')
-        ->get()
-        ->map(function ($appt) {
-            if (!$appt->medicalRecord) return null;
+        $history = $patient->appointmentsAsPatient()
+            ->with(['doctor.user', 'medicalRecord'])
+            ->orderBy('StartTime', 'desc')
+            ->get()
+            ->map(function ($appt) {
+                if (!$appt->medicalRecord)
+                    return null;
 
-            return [
-                'RecordID'   => $appt->medicalRecord->RecordID,
-                'Diagnosis'  => $appt->medicalRecord->Diagnosis,
-                'Notes'      => $appt->medicalRecord->Notes,
-                'created_at' => $appt->medicalRecord->created_at,
-                'DoctorName' => $appt->doctor?->user?->FullName,
-            ];
-        })
-        ->filter()
-        ->values();
+                return [
+                    'RecordID' => $appt->medicalRecord->RecordID,
+                    'Diagnosis' => $appt->medicalRecord->Diagnosis,
+                    'Notes' => $appt->medicalRecord->Notes,
+                    'created_at' => $appt->medicalRecord->created_at,
+                    'DoctorName' => $appt->doctor?->user?->FullName,
+                ];
+            })
+            ->filter()
+            ->values();
 
-    return response()->json([
-    'data' => $history,
-]);
-}
-
-
+        return response()->json([
+            'data' => $history,
+        ]);
+    }
 
     /**
      * Tạo Bệnh nhân mới
@@ -128,28 +127,29 @@ class PatientController extends Controller
     }
 
     public function patientHistory($id)
-{
-    $patient = User::where('Role', 'BenhNhan')->findOrFail($id);
+    {
+        $patient = User::where('Role', 'BenhNhan')->findOrFail($id);
 
-    $history = $patient->appointmentsAsPatient()
-        ->with(['doctor.user', 'medicalRecord'])
-        ->orderBy('StartTime', 'desc')
-        ->get()
-        ->map(function ($appt) {
-            if (!$appt->medicalRecord) return null;
+        $history = $patient->appointmentsAsPatient()
+            ->with(['doctor.user', 'medicalRecord'])
+            ->orderBy('StartTime', 'desc')
+            ->get()
+            ->map(function ($appt) {
+                if (!$appt->medicalRecord)
+                    return null;
 
-            return [
-                'RecordID'   => $appt->medicalRecord->RecordID,
-                'Diagnosis'  => $appt->medicalRecord->Diagnosis,
-                'Notes'      => $appt->medicalRecord->Notes,
-                'created_at' => $appt->medicalRecord->created_at,
-                'DoctorName' => $appt->doctor?->user?->FullName,
-            ];
-        })
-        ->filter()
-        ->values();
+                return [
+                    'RecordID' => $appt->medicalRecord->RecordID,
+                    'Diagnosis' => $appt->medicalRecord->Diagnosis,
+                    'Notes' => $appt->medicalRecord->Notes,
+                    'created_at' => $appt->medicalRecord->created_at,
+                    'DoctorName' => $appt->doctor?->user?->FullName,
+                ];
+            })
+            ->filter()
+            ->values();
 
-    return response()->json($history);
-}
+        return response()->json($history);
+    }
 
 }
