@@ -35,4 +35,24 @@ class NotificationController extends Controller
 
         return response()->json(['message' => 'Đã đánh dấu đã đọc']);
     }
+    public function destroy($id)
+    {
+        $userId = Auth::id();
+        $notification = Notification::where('NotificationID', $id)
+            ->where('UserID', $userId)
+            ->first();
+
+        if (!$notification) {
+            return response()->json(['message' => 'Không tìm thấy hoặc bạn không có quyền xóa'], 404);
+        }
+
+        $notification->delete();
+
+        return response()->json(['message' => 'Đã xóa thông báo'], 200);
+    }
+    public function destroyAll()
+    {
+        Notification::query()->delete();
+        return response()->json(['message' => 'Đã xóa toàn bộ lịch sử thông báo']);
+    }
 }
