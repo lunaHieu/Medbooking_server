@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DoctorAvailabilityController;
 use App\Http\Controllers\Api\MedicalRecordController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\Admin\FeedbackController;
+use App\Http\Controllers\Api\Admin\NotificationController;
 
 
 // Doctor Controllers
@@ -70,6 +71,7 @@ Route::get('/doctor/test-public', function () {
 // =======================================================
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
+
 Route::get('/specialties', [SpecialtyController::class, 'index']);
 Route::get('/specialties/{id}', [SpecialtyController::class, 'show']);
 Route::get('/specialties/{id}/availability', [SpecialtyController::class, 'getAvailability']);
@@ -214,13 +216,24 @@ Route::put('/profile', [DoctorController::class, 'updateProfile']);
         Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
         Route::get('/patients', [PatientController::class, 'index']);
         Route::get('/patients/{id}', [PatientController::class, 'show']);
+         Route::put('/patients/{id}', [PatientController::class, 'update']);
         Route::get('/medical-records', [MedicalRecordController::class, 'index']);
         Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
+        Route::get('/patients/{id}/history', [PatientController::class, 'patientHistory']);
 
         Route::get('/users', [PatientController::class, 'index']); 
     Route::get('/users/{id}', [PatientController::class, 'show']);
     Route::get('/services', [AdminServiceController::class, 'index']);
       Route::get('/feedbacks', [FeedbackController::class, 'index']);
+
+      Route::get('/notifications', [NotificationController::class, 'index']);
+Route::post('/notifications/send', [NotificationController::class, 'send']);
+Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+Route::post(
+    '/notifications/trigger-reminders',
+    [NotificationController::class, 'triggerReminders']
+);
+
     });
 
     // ===================================================

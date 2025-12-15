@@ -67,7 +67,11 @@ class AuthController extends Controller
     // login thủ công
     Auth::login($user);
 
-    $token = $user->createToken('auth_token')->plainTextToken;
+    $token = $user->createToken(
+    'auth_token',
+    [$user->Role] 
+)->plainTextToken;
+
 
     return response()->json([
         'access_token' => $token,

@@ -20,7 +20,10 @@ class AppointmentManagementController extends Controller
         // 'patient' và 'doctor.user' là tên các relation trong Model Appointment
         $appointments = Appointment::with(['patient', 'doctor.user', 'service', 'schedule'])->get();
 
-        return response()->json($appointments);
+        return response()->json([
+    'data' => $appointments
+]);
+
     }
     public function store(Request $request)
     {
