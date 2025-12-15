@@ -69,8 +69,9 @@ Route::get('/doctor/test-public', function () {
 // =======================================================
 // PUBLIC ROUTES 
 // =======================================================
-Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/specialties', [SpecialtyController::class, 'index']);
 Route::get('/specialties/{id}', [SpecialtyController::class, 'show']);
@@ -285,6 +286,7 @@ Route::prefix('test')->group(function () {
         ]);
     });
 });
+
 
 // =======================================================
 // SIMPLE UPDATE
