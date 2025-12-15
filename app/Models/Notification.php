@@ -12,7 +12,14 @@ class Notification extends Model
 
     protected $table = 'notifications';
     protected $primaryKey = 'NotificationID';
-
+    protected $fillable = [
+        'UserID',
+        'Title',
+        'Content',
+        'NotificationType',
+        'Channel',
+        'Status'
+    ];
     /**
      * Bảng này có dùng timestamps.
      */
