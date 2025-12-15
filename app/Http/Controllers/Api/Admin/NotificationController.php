@@ -9,8 +9,6 @@ use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Artisan;
-
 class NotificationController extends Controller
 {
     /**
@@ -28,6 +26,7 @@ class NotificationController extends Controller
 
     /**
      * Gửi thông báo mới (Hàng loạt).
+     * POST /api/admin/notifications/send
      */
     public function send(Request $request)
     {
@@ -77,34 +76,13 @@ class NotificationController extends Controller
     /**
      * Xóa một thông báo cụ thể
      */
-    public function destroy($id)
-    {
-        $notification = Notification::find($id);
-        if (!$notification) {
-            return response()->json(['message' => 'Không tìm thấy thông báo'], 404);
-        }
-        $notification->delete();
-        return response()->json(['message' => 'Đã xóa thành công!'], 200);
-    }
-    public function destroyAll()
-    {
-        Notification::query()->delete();
-        return response()->json(['message' => 'Đã xóa toàn bộ lịch sử thông báo']);
-    }
-    public function triggerReminders()
-    {
-        try {
-            Artisan::call('app:remind-appointments');
 
-            $output = Artisan::output();
+    public function triggerReminders(Request $request)
+    {
+        \Log::info('TRIGGER REMINDERS HIT');
 
-            return response()->json([
-                'message' => 'Đã chạy quét lịch hẹn thành công.',
-                'detail' => $output
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Lỗi khi chạy lệnh', 'error' => $e->getMessage()], 500);
-        }
+        return response()->json([
+            'message' => 'OK'
+        ], 200);
     }
 }

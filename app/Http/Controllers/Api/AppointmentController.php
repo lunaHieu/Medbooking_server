@@ -32,6 +32,7 @@ class AppointmentController extends Controller
 
         return response()->json($appointments, 200, [], JSON_UNESCAPED_UNICODE);
     }
+
     /**
      * Bác sĩ tạo lịch Tái khám cho bệnh nhân
      * POST /api/doctor/appointments/follow-up
@@ -399,6 +400,36 @@ class AppointmentController extends Controller
      * HÀM MỚI (Doctor): Lấy chi tiết 1 lịch hẹn.
      * Chạy khi gọi GET /api/doctor/appointments/{id}
      */
+
+    public function getPendingAppointments(Request $request)
+{
+    try {
+        // Kiểm tra xem class có tồn tại không
+        if (!class_exists('App\Models\Appointment')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Appointment model not found'
+            ], 500);
+        }
+        
+        // Lấy appointments pending
+        $appointments = \App\Models\Appointment::where('Status', 'Pending')->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $appointments,
+            'count' => $appointments->count()
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage(),
+            'trace' => env('APP_DEBUG') ? $e->getTraceAsString() : null
+        ], 500);
+    }
+}
+
     public function doctorShowAppointment(Request $request, $id)
     {
         $doctor = $request->user()->doctorProfile;
@@ -498,29 +529,34 @@ class AppointmentController extends Controller
     /**
      * Cập nhật trạng thái lịch hẹn(CheckedIn -> InProgress -> Completed)
      */
-    public function updateStatus(Request $request, $id)
+  public function updateStatus(Request $request, $id)
     {
         $request->validate([
             'Status' => 'required|in:InProgress,Completed,Cancelled'
         ]);
+
         $user = $request->user();
-        //Tìm lịch hẹn phải đúng là của bác sĩ A
-        $appointment = Appointment::where('AppoinmentID', $id)
-            ->where('DoctorID', $user->doctor->DoctorID)
+        $doctor = $user->doctorProfile; 
+
+        if (!$doctor) {
+            return response()->json(['message' => 'Chỉ bác sĩ mới được thực hiện hành động này.'], 403);
+        }
+
+        $appointment = Appointment::where('AppointmentID', $id)
+            ->where('DoctorID', $doctor->DoctorID)
             ->first();
+
         if (!$appointment) {
             return response()->json(['message' => 'Lịch hẹn không tồn tại hoặc bạn không có quyền.'], 404);
         }
 
-        //Cập nhật trạng thái
-        $oldStatus = $appointment->Status;
         $appointment->Status = $request->Status;
         $appointment->save();
 
         return response()->json([
-            'message' => 'Cập nhật thành công!',
-            'previous_status' => $oldStatus,
-            'current_status' => $appointment->Status
+            'success' => true,
+            'message' => 'Cập nhật trạng thái thành công!',
+            'data' => $appointment
         ]);
     }
 }
