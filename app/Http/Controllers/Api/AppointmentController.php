@@ -252,6 +252,7 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
 
         if ($appointment->Status !== 'Pending') {
+
             return response()->json(['message' => 'Lịch hẹn này đã được xử lý (không ở trạng thái "Pending").'], 422);
         }
         $appointment->Status = 'Confirmed';
@@ -414,6 +415,23 @@ class AppointmentController extends Controller
 
         // 2. Trả về chi tiết
         return response()->json($appointment, 200, [], JSON_UNESCAPED_UNICODE);
+    }
+    public function getPendingAppointments(Request $request)
+    {
+
+        $appointments = Appointment::with([
+            'patient',
+            'doctor.user',
+            'doctor.specialty'
+        ])
+            ->where('Status', 'Pending')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $appointments
+        ]);
     }
     /**
      * HÀM MỚI: Bệnh nhân gửi đánh giá sau khi khám
