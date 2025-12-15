@@ -14,7 +14,7 @@ class User extends Authenticatable
     public $timestamps = true;
     protected $table = 'users';
     protected $keyType = 'int';
-    
+
     protected $fillable = [
         'FullName',
         'Username',
@@ -43,8 +43,8 @@ class User extends Authenticatable
     public function doctorProfile()
     {
         return $this->hasOne(Doctor::class, 'DoctorID', 'UserID')
-                     ->withDefault()
-                     ->with('specialty');
+            ->withDefault()
+            ->with('specialty');
     }
 
     public function appointmentsAsPatient()
@@ -111,5 +111,16 @@ class User extends Authenticatable
         }
 
         return $data;
+    }
+    public function familyMembers()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'user_relations',
+            'UserID',
+            'RelativeUserID'
+        )
+            ->withPivot('RelationType')
+            ->withTimestamps();
     }
 }

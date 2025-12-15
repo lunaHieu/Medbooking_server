@@ -19,18 +19,18 @@ class DoctorController extends Controller
     {
         try {
             $user = $request->user();
-            
-            // ✅ Tải quan hệ với chuyên khoa
+
+            // Tải quan hệ với chuyên khoa
             $user->load(['doctorProfile.specialty']);
-            
+
             if (!$user->doctorProfile) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Tài khoản chưa được gán hồ sơ bác sĩ'
                 ], 404);
             }
-            
-            // ✅ Chuẩn bị dữ liệu chuyên khoa
+
+            // Chuẩn bị dữ liệu chuyên khoa
             $specialtyData = null;
             if ($user->doctorProfile->specialty) {
                 $specialtyData = [
@@ -47,7 +47,7 @@ class DoctorController extends Controller
                     ];
                 }
             }
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -67,10 +67,10 @@ class DoctorController extends Controller
                     ]
                 ]
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Doctor profile error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi server',
@@ -82,30 +82,30 @@ class DoctorController extends Controller
     /**
      * PUT /api/doctor/profile
      */
-   public function updateProfile(Request $request)
+    public function updateProfile(Request $request)
     {
         try {
             $user = Auth::user();
-            
+
             $validated = $request->validate([
-                'full_name' => 'required|string|max:255',         
-                'phone' => 'nullable|string|max:20',                
-                'specialty_id' => 'nullable|integer|exists:specialties,SpecialtyID', 
-                'degree' => 'nullable|string|max:100',              
-                'years_of_experience' => 'nullable|integer|min:0',  
-                'profile_description' => 'nullable|string',         
+                'full_name' => 'required|string|max:255',
+                'phone' => 'nullable|string|max:20',
+                'specialty_id' => 'nullable|integer|exists:specialties,SpecialtyID',
+                'degree' => 'nullable|string|max:100',
+                'years_of_experience' => 'nullable|integer|min:0',
+                'profile_description' => 'nullable|string',
             ]);
-            
+
             // Cập nhật User
             $user->update([
-                'FullName' => $validated['full_name'],            
+                'FullName' => $validated['full_name'],
                 'PhoneNumber' => $validated['phone'] ?? $user->PhoneNumber,
             ]);
-            
+
             // Cập nhật Doctor
             if ($user->doctorProfile) {
                 $doctorData = [
-                    'SpecialtyID' => $validated['specialty_id'] ?? null,  
+                    'SpecialtyID' => $validated['specialty_id'] ?? null,
                     'Degree' => $validated['degree'] ?? null,
                     'YearsOfExperience' => $validated['years_of_experience'] ?? null,
                     'ProfileDescription' => $validated['profile_description'] ?? null,
@@ -120,11 +120,11 @@ class DoctorController extends Controller
                     'ProfileDescription' => $validated['profile_description'] ?? null,
                 ]);
             }
-            
+
             // Refresh và response
             $user->refresh();
             $user->load(['doctorProfile.specialty']);
-            
+
             $specialtyData = null;
             if ($user->doctorProfile && $user->doctorProfile->specialty) {
                 $specialtyData = [
@@ -132,7 +132,7 @@ class DoctorController extends Controller
                     'SpecialtyName' => $user->doctorProfile->specialty->SpecialtyName
                 ];
             }
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Cập nhật hồ sơ thành công',
@@ -151,7 +151,7 @@ class DoctorController extends Controller
                     ] : null
                 ]
             ]);
-            
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
@@ -160,7 +160,7 @@ class DoctorController extends Controller
             ], 422);
         } catch (\Exception $e) {
             \Log::error('Update doctor profile error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Cập nhật thất bại: ' . $e->getMessage()
@@ -168,21 +168,79 @@ class DoctorController extends Controller
         }
     }
 
-public function index()
-{
-    try {
-        $doctors = User::where('Role', 'BacSi')
-            ->with(['doctorProfile.specialty'])
+    public function index(Request $request)
+    {
+        // Query chung
+        $query = Doctor::with(['user', 'specialty']);
+
+        // Tìm theo tên
+        if ($request->filled('name')) {
+            $search = $request->name;
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('FullName', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Lọc theo chuyên khoa
+        if ($request->filled('specialty_id')) {
+            $query->where('SpecialtyID', $request->specialty_id);
+        }
+
+        // Tìm theo tên (search)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('FullName', 'like', "%{$search}%");
+            });
+        }
+
+        $doctors = $query->get();
+
+        return response()->json($doctors, 200, [], JSON_UNESCAPED_UNICODE);
+    }
+
+
+    public function getAvailability($doctorId)
+    {
+        // 1️⃣ Check doctor tồn tại
+        $doctor = Doctor::find($doctorId);
+
+        if (!$doctor) {
+            return response()->json([
+                'message' => 'Doctor not found'
+            ], 404);
+        }
+
+        // 2️⃣ Lấy slot khả dụng
+        $slots = DoctorAvailability::where('DoctorID', $doctorId)
+            ->where('Status', 'available')
             ->get();
 
-        $doctorsData = $doctors->map(function ($user) {
-            if (!$user->doctorProfile) {
-                return null; // Bỏ qua nếu chưa có hồ sơ bác sĩ
+        // 3️⃣ Trả về array (kể cả rỗng)
+        return response()->json($slots, 200);
+    }
+
+    /**
+     * GET /api/doctors/{id} - Chi tiết bác sĩ public
+     */
+    public function show($id)
+    {
+        try {
+            $user = User::where('Role', 'BacSi')
+                ->where('UserID', $id)
+                ->with(['doctorProfile.specialty'])
+                ->first();
+
+            if (!$user || !$user->doctorProfile) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy bác sĩ'
+                ], 404);
             }
 
             $specialty = $user->doctorProfile->specialty;
 
-            return [
+            $data = [
                 'UserID' => $user->UserID,
                 'FullName' => $user->FullName,
                 'PhoneNumber' => $user->PhoneNumber,
@@ -203,100 +261,20 @@ public function index()
                     ] : null,
                 ]
             ];
-        })->filter()->values(); // Loại bỏ null và reset key
 
-        return response()->json([
-            'success' => true,
-            'data' => $doctorsData,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+            ]);
 
-    } catch (\Exception $e) {
-        \Log::error('Doctor index error: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+        } catch (\Exception $e) {
+            \Log::error('Doctor show error: ' . $e->getMessage());
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Lỗi tải danh sách bác sĩ',
-            'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
-        ], 500);
-    }
-}
-
-
-public function getAvailability($doctorId)
-{
-    // 1️⃣ Check doctor tồn tại
-    $doctor = Doctor::find($doctorId);
-
-    if (!$doctor) {
-        return response()->json([
-            'message' => 'Doctor not found'
-        ], 404);
-    }
-
-    // 2️⃣ Lấy slot khả dụng
-    $slots = DoctorAvailability::where('DoctorID', $doctorId)
-        ->where('Status', 'available')
-        ->get();
-
-    // 3️⃣ Trả về array (kể cả rỗng)
-    return response()->json($slots, 200);
-}
-
-/**
- * GET /api/doctors/{id} - Chi tiết bác sĩ public
- */
-public function show($id)
-{
-    try {
-        $user = User::where('Role', 'BacSi')
-            ->where('UserID', $id)
-            ->with(['doctorProfile.specialty'])
-            ->first();
-
-        if (!$user || !$user->doctorProfile) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy bác sĩ'
-            ], 404);
+                'message' => 'Lỗi tải thông tin bác sĩ'
+            ], 500);
         }
-
-        $specialty = $user->doctorProfile->specialty;
-
-        $data = [
-            'UserID' => $user->UserID,
-            'FullName' => $user->FullName,
-            'PhoneNumber' => $user->PhoneNumber,
-            'Email' => $user->Email,
-            'avatar_url' => $user->avatar_url ? asset('storage/' . $user->avatar_url) : null,
-            'doctor' => [
-                'DoctorID' => $user->doctorProfile->DoctorID,
-                'SpecialtyID' => $user->doctorProfile->SpecialtyID,
-                'Degree' => $user->doctorProfile->Degree,
-                'YearsOfExperience' => $user->doctorProfile->YearsOfExperience,
-                'ProfileDescription' => $user->doctorProfile->ProfileDescription,
-                'imageURL' => $user->doctorProfile->imageURL ? asset('storage/' . $user->doctorProfile->imageURL) : null,
-                'specialty' => $specialty ? [
-                    'SpecialtyID' => $specialty->SpecialtyID,
-                    'SpecialtyName' => $specialty->SpecialtyName,
-                    'Description' => $specialty->Description,
-                    'imageURL' => $specialty->imageURL,
-                ] : null,
-            ]
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-        ]);
-
-    } catch (\Exception $e) {
-        \Log::error('Doctor show error: ' . $e->getMessage());
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Lỗi tải thông tin bác sĩ'
-        ], 500);
     }
-}
 
 }
