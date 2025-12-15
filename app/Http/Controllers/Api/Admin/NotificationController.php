@@ -76,5 +76,13 @@ class NotificationController extends Controller
     /**
      * Xóa một thông báo cụ thể
      */
-    public function destroy($id)
+
+    public function triggerReminders(Request $request)
+    {
+        \Log::info('TRIGGER REMINDERS HIT');
+
+        return response()->json([
+            'message' => 'OK'
+        ], 200);
+    }
 }

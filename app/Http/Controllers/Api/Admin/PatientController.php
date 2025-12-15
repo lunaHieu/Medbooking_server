@@ -47,18 +47,33 @@ class PatientController extends Controller
      * GET /api/admin/patients/{id}/history
      */
     public function getHistory($id)
-    {
-        $patient = User::where('Role', 'BenhNhan')->findOrFail($id);
-        
-        // Lấy danh sách lịch hẹn (appointments) của bệnh nhân này
-        // Kèm theo thông tin Bác sĩ và Bệnh án (nếu có)
-        $history = $patient->appointmentsAsPatient()
-                            ->with(['doctor.user', 'medicalRecord'])
-                            ->orderBy('StartTime', 'desc')
-                            ->get();
+{
+    $patient = User::where('Role', 'BenhNhan')->findOrFail($id);
 
-        return response()->json($history, 200, [], JSON_UNESCAPED_UNICODE);
-    }
+    $history = $patient->appointmentsAsPatient()
+        ->with(['doctor.user', 'medicalRecord'])
+        ->orderBy('StartTime', 'desc')
+        ->get()
+        ->map(function ($appt) {
+            if (!$appt->medicalRecord) return null;
+
+            return [
+                'RecordID'   => $appt->medicalRecord->RecordID,
+                'Diagnosis'  => $appt->medicalRecord->Diagnosis,
+                'Notes'      => $appt->medicalRecord->Notes,
+                'created_at' => $appt->medicalRecord->created_at,
+                'DoctorName' => $appt->doctor?->user?->FullName,
+            ];
+        })
+        ->filter()
+        ->values();
+
+    return response()->json([
+    'data' => $history,
+]);
+}
+
+
 
     /**
      * Tạo Bệnh nhân mới
@@ -111,4 +126,30 @@ class PatientController extends Controller
         $patient->delete();
         return response()->json(['message' => 'Xóa bệnh nhân thành công.'], 200);
     }
+
+    public function patientHistory($id)
+{
+    $patient = User::where('Role', 'BenhNhan')->findOrFail($id);
+
+    $history = $patient->appointmentsAsPatient()
+        ->with(['doctor.user', 'medicalRecord'])
+        ->orderBy('StartTime', 'desc')
+        ->get()
+        ->map(function ($appt) {
+            if (!$appt->medicalRecord) return null;
+
+            return [
+                'RecordID'   => $appt->medicalRecord->RecordID,
+                'Diagnosis'  => $appt->medicalRecord->Diagnosis,
+                'Notes'      => $appt->medicalRecord->Notes,
+                'created_at' => $appt->medicalRecord->created_at,
+                'DoctorName' => $appt->doctor?->user?->FullName,
+            ];
+        })
+        ->filter()
+        ->values();
+
+    return response()->json($history);
+}
+
 }

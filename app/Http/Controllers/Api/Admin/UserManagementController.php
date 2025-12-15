@@ -20,13 +20,14 @@ class UserManagementController extends Controller
     public function index(Request $request)
     {
         $query = User::query();
+         $this->authorize('view users');
 
-        // 1. Lọc (Filter) theo Vai trò (Role)
+        //Lọc (Filter) theo Vai trò (Role)
         if ($request->has('role')) {
             $query->where('Role', $request->input('role'));
         }
 
-        // 2. Tìm kiếm (Search)
+        //Tìm kiếm (Search)
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
             $query->where(function ($q) use ($searchTerm) {

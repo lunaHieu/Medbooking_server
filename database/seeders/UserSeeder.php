@@ -73,7 +73,7 @@ class UserSeeder extends Seeder
                 'Username' => 'staff', // Dùng user này để login Staff
                 'PhoneNumber' => '0666666666',
                 'password' => Hash::make('staff123'), // Mật khẩu là 'staff123'
-                'Role' => 'NhanVien', // <-- VAI TRÒ NHÂN VIÊN
+                'Role' => 'NhanVien',
                 'Status' => 'HoatDong',
                 'created_at' => now(),
                 'updated_at' => now(),
