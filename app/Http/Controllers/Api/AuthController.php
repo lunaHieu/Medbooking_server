@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage; // SỬA: Facedes → Facades
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -44,17 +44,14 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        // 1. Validate (Kiểm tra) dữ liệu đầu vào
         $request->validate([
-            'Username' => 'required|string', // Cần Username (hoặc Email/SĐT)
+            'Username' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        // 2. Thử xác thực
-        // Chúng ta lấy Username và password từ request
         $credentials = $request->only('Username', 'password');
 
-        // 3. Dùng "cảnh sát" Auth::attempt để kiểm tra
+        // Dùng Auth::attempt để kiểm tra
         // Auth::attempt sẽ tự động:
         // - Tìm user có 'Username' = $request->Username
         // - Hash $request->password
@@ -65,22 +62,20 @@ class AuthController extends Controller
             // Lấy thông tin user vừa login
             $user = $request->user();
 
-            // 4. Tạo "Chìa khóa" (API Token) cho user
+            // Tạo API Token cho user
             // Đặt tên token là 'api-token'
             $token = $user->createToken('api-token')->plainTextToken;
 
-            // 5. Trả về Chìa khóa và Thông tin User
+            //Trả về Chìa khóa và Thông tin User
             return response()->json([
                 'user' => $user,
                 'token' => $token
-            ], 200); // 200 = OK
+            ], 200);
 
         } else {
-            // Xác thực thất bại!
-            // 6. Trả về lỗi
             return response()->json([
                 'message' => 'Tên đăng nhập hoặc mật khẩu không chính xác.'
-            ], 401); // 401 = Unauthorized (Không có quyền)
+            ], 401);
         }
     }
 
