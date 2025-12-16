@@ -10,8 +10,12 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        // [FIX LỖI 1060: Duplicate column name 'Type']
         Schema::table('appointments', function (Blueprint $table) {
-            $table->string('Type')->default('New')->after('Status');
+            // CHỈ THÊM CỘT NẾU NÓ CHƯA TỒN TẠI
+            if (!Schema::hasColumn('appointments', 'Type')) { 
+                $table->string('Type')->default('New')->after('Status');
+            }
         });
     }
 
@@ -20,8 +24,12 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        // [FIX BỔ SUNG] Đảm bảo logic rollback chuẩn
         Schema::table('appointments', function (Blueprint $table) {
-            //
+            // CHỈ XÓA CỘT NẾU NÓ ĐANG TỒN TẠI
+            if (Schema::hasColumn('appointments', 'Type')) { 
+                $table->dropColumn('Type');
+            }
         });
     }
 };

@@ -21,6 +21,8 @@ use App\Http\Controllers\Api\Admin\AppointmentManagementController;
 use App\Http\Controllers\Api\Admin\SpecialtyController as AdminSpecialtyController;
 use App\Http\Controllers\Api\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Api\Admin\PatientController;
+use App\Http\Controllers\Api\Admin\UserManagementController;
+
 use App\Http\Controllers\Api\Staff\DashboardController as StaffDashboardController;
 
 // PUBLIC TEST ROUTES 
@@ -57,8 +59,10 @@ Route::get('/doctor/test-public', function () {
 });
 
 // PUBLIC ROUTES 
-Route::post('/register', [AuthController::class, 'register']);
+// =======================================================
 Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/specialties', [SpecialtyController::class, 'index']);
 Route::get('/specialties/{id}', [SpecialtyController::class, 'show']);
@@ -182,6 +186,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ADMIN + STAFF
     Route::middleware('role:QuanTriVien,NhanVien')->prefix('admin')->group(function () {
+
+        // Quản lý Users (Thêm, Sửa, Xóa)
+        Route::post('/users', [UserManagementController::class, 'store']);
+        Route::put('/users/{id}', [UserManagementController::class, 'update']);
+        Route::delete('/users/{id}', [UserManagementController::class, 'destroy']);
+
         Route::post('/doctors', [DoctorManagementController::class, 'store']);
         Route::put('/doctors/{id}', [DoctorManagementController::class, 'update']);
         Route::delete('/doctors/{id}', [DoctorManagementController::class, 'destroy']);
@@ -204,7 +214,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
         Route::get('/patients/{id}/history', [PatientController::class, 'patientHistory']);
 
-        Route::get('/users', [PatientController::class, 'index']);
+        Route::get('/users', [UserManagementController::class, 'index']);
         Route::get('/users/{id}', [PatientController::class, 'show']);
         Route::get('/services', [AdminServiceController::class, 'index']);
         Route::get('/feedbacks', [FeedbackController::class, 'index']);
@@ -265,6 +275,8 @@ Route::prefix('test')->group(function () {
     });
 });
 
+
+// =======================================================
 // SIMPLE UPDATE
 Route::patch('/simple-update/{id}', function ($id) {
     error_log("=== SIMPLE UPDATE CALLED ===");

@@ -20,6 +20,7 @@ class UserManagementController extends Controller
     public function index(Request $request)
     {
         $query = User::query();
+       //  $this->authorize('view users');
 
         //Lọc (Filter) theo Vai trò (Role)
         if ($request->has('role')) {
