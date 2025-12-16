@@ -7,10 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Doctor extends Model
 {
     protected $table = 'doctors';
+    
+    // Khóa chính là DoctorID
     protected $primaryKey = 'DoctorID';
 
+    // ⚠️ QUAN TRỌNG: Vì DoctorID không tự tăng (nó lấy theo UserID), phải tắt auto-increment
+    public $incrementing = false; 
+
     protected $fillable = [
-        'UserID',
+        'DoctorID', // Phải có cái này để lệnh create(['DoctorID' => ...]) chạy được
         'SpecialtyID',
         'Degree',
         'YearsOfExperience',
@@ -27,6 +32,8 @@ class Doctor extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'UserID', 'UserID');
+        // 👇 CHỈNH SỬA QUAN TRỌNG NHẤT:
+        // Nói với Laravel: "Hãy lấy User có UserID bằng với DoctorID của tôi"
+        return $this->belongsTo(User::class, 'DoctorID', 'UserID');
     }
 }
