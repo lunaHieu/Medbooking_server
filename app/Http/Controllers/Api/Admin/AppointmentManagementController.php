@@ -1,12 +1,11 @@
 <?php
-// Tên file: app/Http/Controllers/Api/Admin/SpecialtyController.php
 
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Specialty;
-use Illuminate\Support\Facades\Storage; // <-- Quan trọng: Để xử lý file ảnh
+use Illuminate\Support\Facades\Storage;
 use App\Models\Appointment;
 class AppointmentManagementController extends Controller
 {
@@ -21,8 +20,8 @@ class AppointmentManagementController extends Controller
         $appointments = Appointment::with(['patient', 'doctor.user', 'service', 'schedule'])->get();
 
         return response()->json([
-    'data' => $appointments
-]);
+            'data' => $appointments
+        ]);
 
     }
     public function store(Request $request)
@@ -34,13 +33,12 @@ class AppointmentManagementController extends Controller
             'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
-        // --- Xử lý Upload Ảnh ---
+        //Xử lý Upload Ảnh
         $path = null;
         if ($request->hasFile('imageURL')) {
             // Lưu vào folder 'public/uploads/specialties'
             $path = $request->file('imageURL')->store('uploads/specialties', 'public');
         }
-        // ------------------------
 
         $specialty = new Specialty();
         $specialty->SpecialtyName = $request->SpecialtyName;
@@ -60,7 +58,6 @@ class AppointmentManagementController extends Controller
     /**
      * Admin Cập nhật 1 Chuyên khoa.
      * Chạy khi gọi PUT /api/admin/specialties/{id}
-     * (Frontend nhớ gửi _method: PUT trong FormData)
      */
     public function update(Request $request, $id)
     {
@@ -72,21 +69,20 @@ class AppointmentManagementController extends Controller
             'imageURL' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
-        // --- Xử lý Ảnh mới ---
+        // Xử lý Ảnh mới
         if ($request->hasFile('imageURL')) {
-            // 1. Xóa ảnh cũ nếu có (để dọn rác server)
-            // Lưu ý: Đường dẫn trong DB là URL đầy đủ (/storage/...), 
-            // ta cần chuyển về đường dẫn tương đối để xóa.
+            // Xóa ảnh cũ nếu có (để dọn rác server)
+            // Vì Đường dẫn trong DB là URL đầy đủ (/storage/...), 
+            // cần chuyển về đường dẫn tương đối để xóa.
             if ($specialty->imageURL) {
                 $oldPath = str_replace('/storage/', '', $specialty->imageURL);
                 Storage::disk('public')->delete($oldPath);
             }
 
-            // 2. Lưu ảnh mới
+            //Lưu ảnh mới
             $path = $request->file('imageURL')->store('uploads/specialties', 'public');
             $specialty->imageURL = Storage::url($path);
         }
-        // ---------------------
 
         $specialty->SpecialtyName = $request->SpecialtyName;
         $specialty->Description = $request->Description;

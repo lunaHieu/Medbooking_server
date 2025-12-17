@@ -1,5 +1,4 @@
 <?php
-// Tên file: app/Http/Controllers/Api/Admin/NotificationController.php
 
 namespace App\Http\Controllers\Api\Admin;
 

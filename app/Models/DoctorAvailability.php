@@ -17,15 +17,6 @@ class DoctorAvailability extends Model
      */
     protected $primaryKey = 'SlotID';
 
-    /**
-     * Bảng này CÓ DÙNG timestamps (created_at, updated_at).
-     * Vì vậy, chúng ta không cần viết 'public $timestamps = true;'
-     * vì đó là mặc định.
-     */
-
-    /**
-     * === Relationships ===
-     */
 
     /**
      * Mối quan hệ N-1 (Ngược):

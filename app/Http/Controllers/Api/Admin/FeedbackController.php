@@ -1,5 +1,4 @@
 <?php
-// Tên file: app/Http/Controllers/Api/Admin/FeedbackController.php
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
@@ -77,5 +76,4 @@ class FeedbackController extends Controller
     /**
      * 
      */
-    // (Chúng ta có thể thêm hàm store, update, destroy ở đây sau)
 }

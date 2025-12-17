@@ -1,14 +1,13 @@
 <?php
-// Tên file: app/Http/Controllers/Api/Admin/DoctorManagementController.php
 
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;   // <-- Thêm
-use App\Models\Doctor; // <-- Thêm
-use Illuminate\Support\Facades\Hash; // <-- Thêm
-use Illuminate\Support\Facades\DB;   // <-- Thêm
+use App\Models\User;
+use App\Models\Doctor;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 
@@ -20,7 +19,7 @@ class DoctorManagementController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validate
+        // Validate
         $request->validate([
             'FullName' => 'required|string|max:255',
             'Username' => 'required|string|max:100|unique:users',
@@ -37,7 +36,7 @@ class DoctorManagementController extends Controller
         try {
             DB::beginTransaction();
 
-            // 2. Tạo User
+            //Tạo User
             $user = new User();
             $user->FullName = $request->FullName;
             $user->Username = $request->Username;
@@ -48,7 +47,7 @@ class DoctorManagementController extends Controller
             $user->Status = 'HoatDong';
             $user->save();
 
-            // 3. Tạo Doctor
+            //Tạo Doctor
             $doctor = new Doctor();
             $doctor->DoctorID = $user->UserID;
             $doctor->SpecialtyID = $request->SpecialtyID;
@@ -120,7 +119,7 @@ class DoctorManagementController extends Controller
 
             // XỬ LÝ ẢNH
             if ($request->hasFile('imageURL')) {
-                // A. Xóa ảnh cũ
+                // Xóa ảnh cũ
                 if ($doctor->imageURL) {
                     // Vì trong DB đã lưu có /storage/, ta replace đi để lấy path gốc xóa file
                     $oldPath = str_replace('/storage/', '', $doctor->imageURL);
@@ -129,10 +128,10 @@ class DoctorManagementController extends Controller
                     }
                 }
 
-                // B. Lưu ảnh mới
+                // Lưu ảnh mới
                 $path = $request->file('imageURL')->store('uploads/doctors', 'public');
 
-                // C. Lưu vào DB (có /storage/)
+                // Lưu vào DB (có /storage/)
                 $doctor->imageURL = Storage::url($path);
             }
 
@@ -152,40 +151,37 @@ class DoctorManagementController extends Controller
     }
 
     //api de admin tai anh len cho bac si
-    /* HÀM MỚI: Admin tải ảnh đại diện cho Bác sĩ.
+    /* Admin tải ảnh đại diện cho Bác sĩ.
      * Chạy khi gọi POST /api/admin/doctors/{id}/upload-image
      */
     public function uploadImage(Request $request, $id)
     {
-        // 1. Validate (Kiểm tra) file gửi lên
+        // Validate (Kiểm tra) file gửi lên
         $request->validate([
-            // 'imageURL' là tên 'Key' chúng ta sẽ dùng trong Postman
-            // 'image' = Phải là file ảnh
-            // 'mimes' = Chỉ cho phép các định dạng này
             // 'max:2048' = Tối đa 2MB (2048 KB)
             'imageURL' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240'
         ]);
 
-        // 2. Tìm Bác sĩ
+        // Tìm Bác sĩ
         $doctor = Doctor::findOrFail($id);
 
-        // 3. Xóa ảnh cũ (nếu có) để tránh rác
+        // Xóa ảnh cũ (nếu có) để tránh rác
         if ($doctor->imageURL) {
             // 'public' là tên "Disk" (Ổ đĩa) trong Laravel
             // 'Storage::disk('public')->delete(...)' sẽ xóa file trong 'storage/app/public/...'
             Storage::disk('public')->delete($doctor->imageURL);
         }
 
-        // 4. Lưu ảnh mới vào 'storage/app/public/uploads/doctors'
+        // Lưu ảnh mới vào 'storage/app/public/uploads/doctors'
         // 'store' sẽ tự động tạo tên file ngẫu nhiên, an toàn
         // và trả về đường dẫn tương đối (ví dụ: 'uploads/doctors/abc.jpg')
         $path = $request->file('imageURL')->store('uploads/doctors', 'public');
 
-        // 5. Cập nhật đường dẫn MỚI vào database
+        // Cập nhật đường dẫn MỚI vào database
         $doctor->imageURL = $path;
         $doctor->save();
 
-        // 6. Trả về đường dẫn URL đầy đủ (để Frontend hiển thị)
+        // Trả về đường dẫn URL đầy đủ (để Frontend hiển thị)
         return response()->json([
             'message' => 'Tải ảnh lên thành công!',
             // Storage::url($path) sẽ tự động tạo URL đầy đủ
@@ -199,12 +195,12 @@ class DoctorManagementController extends Controller
      */
     public function destroy($id)
     {
-        // 1. Tìm User có UserID = $id VÀ Role là 'BacSi'
+        // Tìm User có UserID = $id VÀ Role là 'BacSi'
         $user = User::where('UserID', $id)
             ->where('Role', 'BacSi')
             ->first(); // Dùng first() thay vì findOrFail()
 
-        // 2. Kiểm tra xem có tìm thấy Bác sĩ không
+        // Kiểm tra xem có tìm thấy Bác sĩ không
         if (!$user) {
             return response()->json(['message' => 'Không tìm thấy Bác sĩ với ID này.'], 404);
         }
@@ -213,12 +209,11 @@ class DoctorManagementController extends Controller
         //     return response()->json(['message' => 'Không thể xoá, Bác sĩ này vẫn còn lịch hẹn.'], 422);
         // }
 
-        // 4. Xóa User
-        // Do 'onDelete('cascade')' trong migration của bảng 'doctors',
+        // onDelete('cascade') trong migration của bảng 'doctors',
         // 'doctors' (và 'doctor_availability') sẽ tự động bị xóa theo.
         $user->delete();
 
-        // 5. Trả về thông báo thành công
+        //Trả về thông báo thành công
         return response()->json(['message' => 'Xóa Bác sĩ thành công.'], 200);
     }
 

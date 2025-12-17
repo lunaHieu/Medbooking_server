@@ -22,7 +22,7 @@ use App\Http\Controllers\Api\Admin\SpecialtyController as AdminSpecialtyControll
 use App\Http\Controllers\Api\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Api\Admin\PatientController;
 use App\Http\Controllers\Api\Admin\UserManagementController;
-
+use App\Http\Controllers\Api\ForgotPasswordController;
 use App\Http\Controllers\Api\Staff\DashboardController as StaffDashboardController;
 
 // PUBLIC TEST ROUTES 
@@ -59,7 +59,6 @@ Route::get('/doctor/test-public', function () {
 });
 
 // PUBLIC ROUTES 
-// =======================================================
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::post('/register', [AuthController::class, 'register']);
@@ -74,6 +73,9 @@ Route::get('/doctors/{id}/availability', [DoctorController::class, 'getAvailabil
 
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{id}', [ServiceController::class, 'show']);
+//Quên mật khẩu
+Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
+Route::post('/forgot-password/reset', [ForgotPasswordController::class, 'resetPassword']);
 
 // HEALTH CHECK
 Route::get('/health', function () {
@@ -99,10 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // CURRENT USER 
     Route::get('/user', function (Request $request) {
-        return response()->json([
-            'success' => true,
-            'data' => $request->user(),
-        ]);
+        return $request->user();
     });
 
     // LOGOUT
@@ -145,6 +144,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
     Route::delete('/notifications/delete-all', [NotificationController::class, 'destroyAll']);
+
     // BÁC SĨ   
     Route::middleware('role:BacSi')->prefix('doctor')->group(function () {
 
@@ -191,20 +191,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users', [UserManagementController::class, 'store']);
         Route::put('/users/{id}', [UserManagementController::class, 'update']);
         Route::delete('/users/{id}', [UserManagementController::class, 'destroy']);
-
+        //Quản lí doctor
         Route::post('/doctors', [DoctorManagementController::class, 'store']);
         Route::put('/doctors/{id}', [DoctorManagementController::class, 'update']);
         Route::delete('/doctors/{id}', [DoctorManagementController::class, 'destroy']);
         Route::post('/doctors/{id}/upload-image', [DoctorManagementController::class, 'uploadImage']);
-
+        //Quản lí dịch vụ
         Route::post('/services', [AdminServiceController::class, 'store']);
         Route::put('/services/{id}', [AdminServiceController::class, 'update']);
         Route::delete('/services/{id}', [AdminServiceController::class, 'destroy']);
-
+        //Quản lí chuyên khoa
         Route::post('/specialties', [AdminSpecialtyController::class, 'store']);
         Route::put('/specialties/{id}', [AdminSpecialtyController::class, 'update']);
         Route::delete('/specialties/{id}', [AdminSpecialtyController::class, 'destroy']);
-
+        //Quản lí lịch hẹn
         Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
         Route::get('/patients', [PatientController::class, 'index']);
         Route::get('/patients/{id}', [PatientController::class, 'show']);
@@ -213,12 +213,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/medical-records', [MedicalRecordController::class, 'index']);
         Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
         Route::get('/patients/{id}/history', [PatientController::class, 'patientHistory']);
-
+        //Quản lí người dùng
         Route::get('/users', [UserManagementController::class, 'index']);
         Route::get('/users/{id}', [PatientController::class, 'show']);
         Route::get('/services', [AdminServiceController::class, 'index']);
         Route::get('/feedbacks', [FeedbackController::class, 'index']);
-
+        //Quản lí thông báo
         Route::get('/notifications', [AdminNotificationController::class, 'index']);
         Route::post('/notifications/send', [AdminNotificationController::class, 'send']);
         Route::delete('/notifications/{id}', [AdminNotificationController::class, 'destroy']);
@@ -276,7 +276,6 @@ Route::prefix('test')->group(function () {
 });
 
 
-// =======================================================
 // SIMPLE UPDATE
 Route::patch('/simple-update/{id}', function ($id) {
     error_log("=== SIMPLE UPDATE CALLED ===");

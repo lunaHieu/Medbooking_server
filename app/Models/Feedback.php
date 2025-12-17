@@ -13,13 +13,6 @@ class Feedback extends Model
     protected $table = 'feedbacks';
     protected $primaryKey = 'FeedbackID';
 
-    /**
-     * Bảng này có dùng timestamps.
-     */
-
-    /**
-     * === Relationships ===
-     */
 
     /**
      * Mối quan hệ N-1 (Ngược):
@@ -42,11 +35,7 @@ class Feedback extends Model
     {
         return $this->belongsTo(User::class, 'PatientID', 'UserID');
     }
-    /**
-     * Lưu ý: Chúng ta sẽ xử lý 'TargetType' và 'TargetID' 
-     * sau này khi cần. Đây là một mối quan hệ "linh hoạt" (Polymorphic), 
-     * nhưng định nghĩa cơ bản là đủ.
-     */
+
     // Hàm này sẽ tự động tìm sang bảng Doctors nếu TargetType='Doctor'
     public function target()
     {

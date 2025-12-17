@@ -1,5 +1,4 @@
 <?php
-// Tên file: app/Models/Service.php
 
 namespace App\Models;
 
@@ -13,15 +12,8 @@ class Service extends Model
     protected $table = 'services';
     protected $primaryKey = 'ServiceID';
 
-    /**
-     * Tắt timestamps (created_at, updated_at) 
-     * vì bảng này không có.
-     */
     public $timestamps = false;
 
-    /**
-     * === Relationships ===
-     */
 
     /**
      * Mối quan hệ N-1 (Ngược):

@@ -15,7 +15,6 @@ class Specialty extends Model
 
     /**
      * Tắt timestamps (created_at, updated_at) 
-     * vì bảng này không có.
      */
     public $timestamps = false;
 
