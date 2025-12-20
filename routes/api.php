@@ -232,6 +232,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/specialties/{id}', [AdminSpecialtyController::class, 'destroy']);
 
         Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
+        Route::get('/check-schedule', [AppointmentManagementController::class, 'checkDoctorSchedule']);
         Route::get('/patients', [PatientController::class, 'index']);
         Route::get('/patients/{id}', [PatientController::class, 'show']);
         Route::put('/patients/{id}', [PatientController::class, 'update']);
