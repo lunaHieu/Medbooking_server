@@ -3,8 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
-
-// Controllers
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\SpecialtyController;
 use App\Http\Controllers\Api\DoctorController;
@@ -15,23 +13,19 @@ use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\Admin\FeedbackController;
 use App\Http\Controllers\Api\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Api\NotificationController;
-
 use App\Http\Controllers\Api\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Api\Doctor\ScheduleController;
 use App\Http\Controllers\Api\Doctor\QueueController;
-
 use App\Http\Controllers\Api\Admin\DoctorManagementController;
 use App\Http\Controllers\Api\Admin\AppointmentManagementController;
 use App\Http\Controllers\Api\Admin\SpecialtyController as AdminSpecialtyController;
 use App\Http\Controllers\Api\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Api\Admin\PatientController;
 use App\Http\Controllers\Api\Admin\UserManagementController;
-
+use App\Http\Controllers\Api\ForgotPasswordController;
 use App\Http\Controllers\Api\Staff\DashboardController as StaffDashboardController;
 
-// =======================================================
 // PUBLIC TEST ROUTES 
-// =======================================================
 Route::get('/test-public', function () {
     return response()->json([
         'success' => true,
@@ -64,9 +58,7 @@ Route::get('/doctor/test-public', function () {
     ]);
 });
 
-// =======================================================
 // PUBLIC ROUTES 
-// =======================================================
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::post('/register', [AuthController::class, 'register']);
@@ -81,10 +73,11 @@ Route::get('/doctors/{id}/availability', [DoctorController::class, 'getAvailabil
 
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{id}', [ServiceController::class, 'show']);
+//Quên mật khẩu
+Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
+Route::post('/forgot-password/reset', [ForgotPasswordController::class, 'resetPassword']);
 
-// =======================================================
 // HEALTH CHECK
-// =======================================================
 Route::get('/health', function () {
     $db = 'unknown';
     try {
@@ -103,29 +96,18 @@ Route::get('/health', function () {
     ]);
 });
 
-// =======================================================
 // PROTECTED ROUTES 
-// =======================================================
 Route::middleware('auth:sanctum')->group(function () {
 
-    // -----------------------------
     // CURRENT USER 
-    // -----------------------------
     Route::get('/user', function (Request $request) {
-        return response()->json([
-            'success' => true,
-            'data' => $request->user(),
-        ]);
+        return $request->user();
     });
 
-    // -----------------------------
     // LOGOUT
-    // -----------------------------
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // -----------------------------
     // TEST PROTECTED
-    // -----------------------------
     Route::get('/test-protected', function (Request $request) {
         $u = $request->user();
         return response()->json([
@@ -141,9 +123,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
     });
 
-    // ===================================================
     // BỆNH NHÂN
-    // ===================================================
     Route::get('/my-appointments', [AppointmentController::class, 'myAppointments']);
     Route::post('/appointments', [AppointmentController::class, 'store']);
     Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
@@ -164,9 +144,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
     Route::delete('/notifications/delete-all', [NotificationController::class, 'destroyAll']);
-    // ===================================================
-    // BÁC SĨ 
-    // ===================================================
+
+    // BÁC SĨ   
     Route::middleware('role:BacSi')->prefix('doctor')->group(function () {
 
         // DASHBOARD
@@ -180,11 +159,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // QUEUE
         Route::get('/queue', [QueueController::class, 'index']);
 
-        // ✅ PROFILE - ENDPOINT QUAN TRỌNG
         Route::get('/profile', [DoctorController::class, 'getProfile']);
         Route::put('/profile', [DoctorController::class, 'updateProfile']);
-
-
 
         Route::patch(
             '/appointments/{id}/status',
@@ -192,14 +168,14 @@ Route::middleware('auth:sanctum')->group(function () {
         );
 
 
-        // MEDICAL RECORDS
+        //hồ sơ bệnh án
         Route::get('/my-medical-records', [MedicalRecordController::class, 'myMedicalRecords']);
 
-        // AVAILABILITY
+        //Lịch rảnh của bác sĩ
         Route::post('/availability', [DoctorAvailabilityController::class, 'store']);
         Route::delete('/availability/{id}', [DoctorAvailabilityController::class, 'destroy']);
 
-        // APPOINTMENTS & MEDICAL
+        // Lịch hẹn và hồ sơ bệnh án
         Route::get('/appointments/{id}', [AppointmentController::class, 'doctorShowAppointment']);
         Route::post('/medical-records', [MedicalRecordController::class, 'store']);
         Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update']);
@@ -208,43 +184,42 @@ Route::middleware('auth:sanctum')->group(function () {
 
     });
 
-    // ===================================================
     // ADMIN + STAFF
-    // ===================================================
     Route::middleware('role:QuanTriVien,NhanVien')->prefix('admin')->group(function () {
 
         // Quản lý Users (Thêm, Sửa, Xóa)
         Route::post('/users', [UserManagementController::class, 'store']);
         Route::put('/users/{id}', [UserManagementController::class, 'update']);
         Route::delete('/users/{id}', [UserManagementController::class, 'destroy']);
-
+        //Quản lí doctor
         Route::post('/doctors', [DoctorManagementController::class, 'store']);
         Route::put('/doctors/{id}', [DoctorManagementController::class, 'update']);
         Route::delete('/doctors/{id}', [DoctorManagementController::class, 'destroy']);
         Route::post('/doctors/{id}/upload-image', [DoctorManagementController::class, 'uploadImage']);
-
+        //Quản lí dịch vụ
         Route::post('/services', [AdminServiceController::class, 'store']);
         Route::put('/services/{id}', [AdminServiceController::class, 'update']);
         Route::delete('/services/{id}', [AdminServiceController::class, 'destroy']);
-
+        //Quản lí chuyên khoa
         Route::post('/specialties', [AdminSpecialtyController::class, 'store']);
         Route::put('/specialties/{id}', [AdminSpecialtyController::class, 'update']);
         Route::delete('/specialties/{id}', [AdminSpecialtyController::class, 'destroy']);
-
+        //Quản lí lịch hẹn
         Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
         Route::get('/check-schedule', [AppointmentManagementController::class, 'checkDoctorSchedule']);
         Route::get('/patients', [PatientController::class, 'index']);
         Route::get('/patients/{id}', [PatientController::class, 'show']);
+        Route::post('/patients', [PatientController::class, 'store']);
         Route::put('/patients/{id}', [PatientController::class, 'update']);
         Route::get('/medical-records', [MedicalRecordController::class, 'index']);
         Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
         Route::get('/patients/{id}/history', [PatientController::class, 'patientHistory']);
-
+        //Quản lí người dùng
         Route::get('/users', [UserManagementController::class, 'index']);
         Route::get('/users/{id}', [PatientController::class, 'show']);
         Route::get('/services', [AdminServiceController::class, 'index']);
         Route::get('/feedbacks', [FeedbackController::class, 'index']);
-
+        //Quản lí thông báo
         Route::get('/notifications', [AdminNotificationController::class, 'index']);
         Route::post('/notifications/send', [AdminNotificationController::class, 'send']);
         Route::delete('/notifications/{id}', [AdminNotificationController::class, 'destroy']);
@@ -255,9 +230,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     });
 
-    // ===================================================
-    // STAFF ONLY
-    // ===================================================
+    // NHÂN VIÊN
     Route::middleware('role:NhanVien,QuanTriVien')->prefix('staff')->group(function () {
         Route::get('/dashboard-stats', [StaffDashboardController::class, 'index']);
         Route::get('/pending-appointments', [AppointmentController::class, 'getPendingAppointments']);
@@ -272,9 +245,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// =======================================================
 // TEST ROUTES
-// =======================================================
 Route::prefix('test')->group(function () {
     Route::get('/doctor-dashboard-stats', [DoctorDashboardController::class, 'testData']);
 
@@ -306,9 +277,7 @@ Route::prefix('test')->group(function () {
 });
 
 
-// =======================================================
 // SIMPLE UPDATE
-// =======================================================
 Route::patch('/simple-update/{id}', function ($id) {
     error_log("=== SIMPLE UPDATE CALLED ===");
     error_log("Appointment ID: " . $id);

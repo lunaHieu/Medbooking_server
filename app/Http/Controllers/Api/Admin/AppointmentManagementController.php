@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Specialty;
-use Illuminate\Support\Facades\Storage; // <-- Quan trọng: Để xử lý file ảnh
+use Illuminate\Support\Facades\Storage;
 use App\Models\Appointment;
 use App\Models\DoctorAvailability;
 
@@ -20,8 +20,8 @@ class AppointmentManagementController extends Controller
         $appointments = Appointment::with(['patient', 'doctor.user', 'service', 'schedule'])->get();
 
         return response()->json([
-    'data' => $appointments
-]);
+            'data' => $appointments
+        ]);
 
     }
 

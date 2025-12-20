@@ -5,7 +5,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Doctor;
 use App\Models\Appointment;
-
+use Carbon\Carbon;
 class QueueController extends Controller
 {
     public function index(Request $request)
@@ -23,7 +23,7 @@ class QueueController extends Controller
         $queue = $doctor->appointments()
             ->with(['patient', 'service'])
             ->whereIn('Status', ['CheckedIn', 'Confirmed'])
-            ->whereDate('StartTime', today())
+            ->whereDate('StartTime', Carbon::now('Asia/Ho_Chi_Minh')->toDateString())
             ->orderBy('StartTime')
             ->get();
 

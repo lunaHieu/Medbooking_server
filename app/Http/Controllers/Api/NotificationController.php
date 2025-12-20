@@ -14,7 +14,7 @@ class NotificationController extends Controller
         $userId = Auth::id();
 
         $notifications = Notification::where('UserID', $userId)
-            ->orderBy('created_at', 'desc') // Đã sửa lỗi chính tả ở đây
+            ->orderBy('created_at', 'desc') 
             ->take(50) // Giới hạn 50 tin mới nhất
             ->get();
 

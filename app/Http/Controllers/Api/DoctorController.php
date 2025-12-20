@@ -63,7 +63,7 @@ class DoctorController extends Controller
                         'YearsOfExperience' => $user->doctorProfile->YearsOfExperience,
                         'ProfileDescription' => $user->doctorProfile->ProfileDescription,
                         'imageURL' => $user->doctorProfile->imageURL,
-                        'specialty' => $specialtyData // ✅ Đảm bảo không null
+                        'specialty' => $specialtyData
                     ]
                 ]
             ]);
@@ -202,7 +202,7 @@ class DoctorController extends Controller
 
     public function getAvailability($doctorId)
     {
-        // 1️⃣ Check doctor tồn tại
+        // Check doctor tồn tại
         $doctor = Doctor::find($doctorId);
 
         if (!$doctor) {
@@ -211,12 +211,12 @@ class DoctorController extends Controller
             ], 404);
         }
 
-        // 2️⃣ Lấy slot khả dụng
+        // Lấy slot khả dụng
         $slots = DoctorAvailability::where('DoctorID', $doctorId)
             ->where('Status', 'available')
             ->get();
 
-        // 3️⃣ Trả về array (kể cả rỗng)
+        // Trả về array (kể cả rỗng)
         return response()->json($slots, 200);
     }
 

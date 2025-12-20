@@ -14,14 +14,6 @@ class ExamResult extends Model
     protected $primaryKey = 'ResultID';
 
     /**
-     * Bảng này có dùng timestamps.
-     */
-
-    /**
-     * === Relationships ===
-     */
-
-    /**
      * Mối quan hệ N-1 (Ngược):
      * Lấy Hồ sơ bệnh án (MedicalRecord) cha của Kết quả này.
      */

@@ -12,7 +12,6 @@ class MedicalRecord extends Model
     protected $table = 'medical_records';
     protected $primaryKey = 'RecordID';
 
-    // THÊM DÒNG NÀY LÀ HẾT LỖI 500 NGAY LẬP TỨC!!!
     protected $fillable = [
         'AppointmentID',
         'PatientID',
