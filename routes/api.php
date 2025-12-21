@@ -206,6 +206,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/specialties/{id}', [AdminSpecialtyController::class, 'destroy']);
         //Quản lí lịch hẹn
         Route::get('/all-appointments', [AppointmentManagementController::class, 'index']);
+        Route::get('/check-schedule', [AppointmentManagementController::class, 'checkDoctorSchedule']);
         Route::get('/patients', [PatientController::class, 'index']);
         Route::get('/patients/{id}', [PatientController::class, 'show']);
         Route::post('/patients', [PatientController::class, 'store']);
