@@ -21,9 +21,9 @@ class QueueController extends Controller
         }
 
         $queue = $doctor->appointments()
-            ->with(['patient', 'service'])
-            ->whereIn('Status', ['CheckedIn', 'Confirmed'])
-            ->whereDate('StartTime', Carbon::now('Asia/Ho_Chi_Minh')->toDateString())
+            ->with(['patient', 'service', 'medicalRecord'])
+            ->whereIn('Status', ['CheckedIn', 'Confirmed', 'InProcess'])
+            // ->whereDate('StartTime', Carbon::now('Asia/Ho_Chi_Minh')->toDateString())
             ->orderBy('StartTime')
             ->get();
 

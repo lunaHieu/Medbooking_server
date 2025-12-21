@@ -229,7 +229,7 @@ class AppointmentController extends Controller
     /**
      * Bác sĩ xem các lịch hẹn đã đặt của mình
      */
-    public function doctorSchedule(Request $request)
+    public function getSchedule(Request $request)
     {
         // Lấy thông tin Bác sĩ (Doctor Profile) của User đang đăng nhập
         $doctor = $request->user()->doctorProfile;

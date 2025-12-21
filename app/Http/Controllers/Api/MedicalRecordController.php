@@ -20,83 +20,74 @@ class MedicalRecordController extends Controller
      */
     public function store(Request $request)
     {
+        //Validation
         $request->validate([
-            'AppointmentID' => 'required|integer|exists:appointments,AppointmentID|unique:medical_records,AppointmentID,NULL,RecordID',
+            'AppointmentID' => 'required|integer|exists:appointments,AppointmentID|unique:medical_records,AppointmentID',
             'Diagnosis' => 'required|string',
+            'CurrentSymptoms' => 'required|string',
             'Notes' => 'nullable|string',
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240', // Max 10MB/file
         ]);
 
         $user = Auth::user();
-        if (!$user) {
-            return response()->json(['message' => 'Chưa đăng nhập'], 401);
-        }
-
-        if ($user->Role !== 'BacSi') {
-            return response()->json(['message' => 'Bạn không phải bác sĩ'], 403);
-        }
-
         $doctor = $user->doctorProfile;
 
-        if (!$doctor) {
-            return response()->json([
-                'message' => 'Không tìm thấy hồ sơ bác sĩ. Vui lòng kiểm tra bảng doctors có dòng UserID = ' . $user->UserID . ' chưa?'
-            ], 403);
+        //Kiểm tra quyền và hồ sơ bác sĩ
+        if (!$doctor || $user->Role !== 'BacSi') {
+            return response()->json(['message' => 'Bạn không có quyền thực hiện thao tác này'], 403);
         }
 
+        //Kiểm tra lịch hẹn
         $appointment = Appointment::where('AppointmentID', $request->AppointmentID)->first();
-        if (!$appointment) {
-            return response()->json(['message' => 'Lịch hẹn không tồn tại'], 404);
-        }
-
-        if ($doctor->DoctorID != $appointment->DoctorID) {
-            return response()->json(['message' => 'Bạn không phải bác sĩ được phân công'], 403);
-        }
-
-        // Lấy thông tin Bác sĩ (Doctor Profile)
-        $doctor = Auth::user()->doctorProfile;
-
-        // Tìm Lịch hẹn (Appointment) tương ứng
-        $appointment = Appointment::where('AppointmentID', $request->AppointmentID)->first();
-
-        if (!$appointment) {
-            return response()->json([
-                'message' => 'Lịch hẹn không tồn tại hoặc đã bị xóa. AppointmentID: ' . $request->AppointmentID
-            ], 404);
-        }
-        // Kiểm tra Bác sĩ có phải là người khám lịch hẹn
-        if ($doctor->DoctorID != $appointment->DoctorID) {
-            return response()->json([
-                'message' => 'Bạn không phải bác sĩ được phân công cho lịch hẹn này.'
-            ], 403);
+        if (!$appointment || $doctor->DoctorID != $appointment->DoctorID) {
+            return response()->json(['message' => 'Lịch hẹn không hợp lệ hoặc bạn không được phân công'], 403);
         }
 
         try {
             DB::beginTransaction();
 
-            //Tạo Bệnh án mới
+            //Tạo Bệnh án mới 
             $record = new MedicalRecord();
             $record->AppointmentID = $request->AppointmentID;
             $record->PatientID = $appointment->PatientID;
             $record->DoctorID = $doctor->DoctorID;
             $record->Diagnosis = $request->Diagnosis;
             $record->Notes = $request->Notes;
+            $record->CurrentSymptoms = $request->CurrentSymptoms;
             $record->save();
 
-            //Cập nhật Status của Lịch hẹn thành 'Completed' (Đã khám)
+            //Xử lý lưu tệp tin vào bảng exam_results
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    // Lưu file vào thư mục storage/app/public/medical_results
+                    $path = $file->store('medical_results', 'public');
+
+                    // Tạo bản ghi trong bảng exam_results
+                    DB::table('exam_results')->insert([
+                        'RecordID' => $record->RecordID,
+                        'FilePath' => $path,
+                        'FileType' => $file->getClientOriginalExtension(), // Phân loại đuôi file
+                        'FileDescription' => 'Kết quả đính kèm: ' . $file->getClientOriginalName(),
+                        'created_at' => now(),
+                    ]);
+                }
+            }
+
+            //Cập nhật trạng thái lịch hẹn
             $appointment->Status = 'Completed';
             $appointment->save();
 
             DB::commit();
 
             return response()->json([
-                'message' => 'Tạo hồ sơ bệnh án thành công!',
+                'message' => 'Lưu bệnh án và kết quả xét nghiệm thành công!',
                 'record' => $record
             ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'message' => 'Lỗi máy chủ, không thể tạo hồ sơ.',
+                'message' => 'Lỗi máy chủ, không thể lưu dữ liệu.',
                 'error' => $e->getMessage()
             ], 500);
         }

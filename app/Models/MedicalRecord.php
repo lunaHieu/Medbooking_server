@@ -17,7 +17,8 @@ class MedicalRecord extends Model
         'PatientID',
         'DoctorID',
         'Diagnosis',
-        'Notes'
+        'Notes',
+        'CurrentSymptoms'
     ];
 
     public function patient()
