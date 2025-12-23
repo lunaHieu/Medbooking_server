@@ -224,7 +224,7 @@ class MedicalRecordController extends Controller
      */
     public function index(Request $request)
     {
-        $query = MedicalRecord::query()->with(['patient', 'doctor.user']);
+        $query = MedicalRecord::query()->with(['patient', 'doctor.user', 'appointment']);
 
         // Lọc (Filter) theo ID Bệnh nhân
         if ($request->has('patient_id')) {

@@ -87,13 +87,14 @@ class DoctorController extends Controller
         try {
             $user = Auth::user();
 
+
             $validated = $request->validate([
                 'full_name' => 'required|string|max:255',
                 'phone' => 'nullable|string|max:20',
-                'specialty_id' => 'nullable|integer|exists:specialties,SpecialtyID',
-                'degree' => 'nullable|string|max:100',
-                'years_of_experience' => 'nullable|integer|min:0',
-                'profile_description' => 'nullable|string',
+                'SpecialtyID' => 'nullable|integer|exists:specialties,SpecialtyID',
+                'Degree' => 'nullable|string|max:100',
+                'YearsOfExperience' => 'nullable|integer|min:0',
+                'ProfileDescription' => 'nullable|string',
             ]);
 
             // Cập nhật User
@@ -102,36 +103,23 @@ class DoctorController extends Controller
                 'PhoneNumber' => $validated['phone'] ?? $user->PhoneNumber,
             ]);
 
-            // Cập nhật Doctor
+
+            $doctorData = [
+                'SpecialtyID' => $request->input('SpecialtyID', $user->doctorProfile->SpecialtyID ?? null),
+                'Degree' => $request->input('Degree', $user->doctorProfile->Degree ?? null),
+                'YearsOfExperience' => $request->input('YearsOfExperience', $user->doctorProfile->YearsOfExperience ?? null),
+                'ProfileDescription' => $request->input('ProfileDescription', $user->doctorProfile->ProfileDescription ?? null),
+            ];
+
             if ($user->doctorProfile) {
-                $doctorData = [
-                    'SpecialtyID' => $validated['specialty_id'] ?? null,
-                    'Degree' => $validated['degree'] ?? null,
-                    'YearsOfExperience' => $validated['years_of_experience'] ?? null,
-                    'ProfileDescription' => $validated['profile_description'] ?? null,
-                ];
-                $user->doctorProfile->update($doctorData); // <-- Dòng này phải liền với trên, không có git log
+                $user->doctorProfile->update($doctorData);
             } else {
-                Doctor::create([
-                    'DoctorID' => $user->UserID,
-                    'SpecialtyID' => $validated['specialty_id'] ?? null,
-                    'Degree' => $validated['degree'] ?? null,
-                    'YearsOfExperience' => $validated['years_of_experience'] ?? null,
-                    'ProfileDescription' => $validated['profile_description'] ?? null,
-                ]);
+                Doctor::create(array_merge(['DoctorID' => $user->UserID], $doctorData));
             }
 
-            // Refresh và response
             $user->refresh();
             $user->load(['doctorProfile.specialty']);
 
-            $specialtyData = null;
-            if ($user->doctorProfile && $user->doctorProfile->specialty) {
-                $specialtyData = [
-                    'SpecialtyID' => $user->doctorProfile->specialty->SpecialtyID,
-                    'SpecialtyName' => $user->doctorProfile->specialty->SpecialtyName
-                ];
-            }
 
             return response()->json([
                 'success' => true,
@@ -140,31 +128,20 @@ class DoctorController extends Controller
                     'FullName' => $user->FullName,
                     'Email' => $user->Email,
                     'PhoneNumber' => $user->PhoneNumber,
-                    'doctor' => $user->doctorProfile ? [
+                    'doctor_profile' => $user->doctorProfile ? [
                         'DoctorID' => $user->doctorProfile->DoctorID,
                         'SpecialtyID' => $user->doctorProfile->SpecialtyID,
                         'Degree' => $user->doctorProfile->Degree,
                         'YearsOfExperience' => $user->doctorProfile->YearsOfExperience,
                         'ProfileDescription' => $user->doctorProfile->ProfileDescription,
                         'imageURL' => $user->doctorProfile->imageURL,
-                        'specialty' => $specialtyData
+                        'specialty' => $user->doctorProfile->specialty
                     ] : null
                 ]
             ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
-            \Log::error('Update doctor profile error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Cập nhật thất bại: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 

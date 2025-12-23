@@ -170,7 +170,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         //hồ sơ bệnh án
         Route::get('/my-medical-records', [MedicalRecordController::class, 'myMedicalRecords']);
-
+        Route::get('/medical-records', [MedicalRecordController::class, 'index']);
+        Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show']);
         //Lịch rảnh của bác sĩ
         Route::post('/availability', [DoctorAvailabilityController::class, 'store']);
         Route::delete('/availability/{id}', [DoctorAvailabilityController::class, 'destroy']);

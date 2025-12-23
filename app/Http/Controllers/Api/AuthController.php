@@ -124,7 +124,7 @@ class AuthController extends Controller
         $request->validate([
             'FullName' => 'required|string|max:255',
             'DateOfBirth' => 'nullable|date',
-            'Gender' => 'nullable|string|in:Nam,Nu,Khac',
+            'Gender' => 'nullable|string',
             'Address' => 'nullable|string',
             'Email' => ['nullable', 'email', Rule::unique('users')->ignore($user->UserID, 'UserID')],
             'PhoneNumber' => ['required', 'string', Rule::unique('users')->ignore($user->UserID, 'UserID')],

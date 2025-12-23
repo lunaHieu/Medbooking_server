@@ -235,7 +235,7 @@ class AppointmentController extends Controller
         $doctor = $request->user()->doctorProfile;
 
         $appointments = $doctor->appointments()
-            // ->whereIn('Status', ['Confirmed', 'Completed'])
+            ->whereIn('Status', ['Confirmed', 'Completed', 'CheckedIn'])
             ->with('patient') // Eager Load thông tin Bệnh nhân
             ->orderBy('StartTime', 'asc')
             ->get();
