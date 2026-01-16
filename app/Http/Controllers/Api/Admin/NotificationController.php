@@ -84,4 +84,9 @@ class NotificationController extends Controller
             'message' => 'OK'
         ], 200);
     }
+    public function destroyAll()
+    {
+        Notification::query()->delete();
+        return response()->json(['message' => 'Đã xóa toàn bộ lịch sử thông báo']);
+    }
 }

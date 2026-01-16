@@ -101,6 +101,7 @@ class AppointmentController extends Controller
     {
         $request->validate([
             'SlotID' => 'required|integer|exists:doctor_availability,SlotID',
+            'PatientID' => 'nullable|integer|exists:users,UserID',
             'InitialSymptoms' => 'nullable|string',
             'file' => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:10240' // Tối đa 10MB
         ]);
@@ -132,7 +133,8 @@ class AppointmentController extends Controller
             }
 
             $appointment = new Appointment();
-            $appointment->PatientID = $user->UserID;
+            $appointment->PatientID = $request->input('PatientID', $user->UserID);
+            $appointment->BookedBy = $user->UserID;
             $appointment->DoctorID = $slot->DoctorID;
             $appointment->SlotID = $slot->SlotID;
             $appointment->StartTime = $slot->StartTime;
@@ -235,7 +237,7 @@ class AppointmentController extends Controller
         $doctor = $request->user()->doctorProfile;
 
         $appointments = $doctor->appointments()
-            ->whereIn('Status', ['Confirmed', 'Completed', 'CheckedIn'])
+            // ->whereIn('Status', ['Confirmed', 'Completed', 'CheckedIn', 'Pending'])
             ->with('patient') // Eager Load thông tin Bệnh nhân
             ->orderBy('StartTime', 'asc')
             ->get();

@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Facades\Validator;
 class AuthController extends Controller
 {
     /**
@@ -224,28 +224,29 @@ class AuthController extends Controller
     }
     public function changePassword(Request $request)
     {
-        $request->validate([
-            'current_password' => 'required',
-            'new_password' => 'required|min:6|confirmed',
+        $validator = Validator::make($request->all(), [
+            'currentPassword' => 'required',
+            'newPassword' => 'required|min:6|different:currentPassword',
+            'confirmPassword' => 'required|same:newPassword',
         ], [
-            'current_password.required' => 'Vui lòng nhập mật khẩu hiện tại.',
-            'new_password.required' => 'Vui lòng nhập mật khẩu mới.',
-            'new_password.min' => 'Mật khẩu mới phải có ít nhất 6 ký tự.',
-            'new_password.confirmed' => 'Xác nhận mật khẩu mới không khớp.',
+            'newPassword.different' => 'Mật khẩu mới phải khác mật khẩu cũ.',
+            'confirmPassword.same' => 'Xác nhận mật khẩu không khớp.',
         ]);
 
-        $user = $request->user();
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        $user = Auth::user();
+
+        if (!Hash::check($request->currentPassword, $user->password)) {
             return response()->json([
-                'success' => false,
                 'message' => 'Mật khẩu hiện tại không chính xác.'
             ], 400);
         }
 
-        $user->update([
-            'password' => Hash::make($request->new_password)
-        ]);
+        $user->password = Hash::make($request->newPassword);
+        $user->save();
 
         return response()->json([
             'success' => true,

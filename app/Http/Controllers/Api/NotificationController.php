@@ -14,7 +14,7 @@ class NotificationController extends Controller
         $userId = Auth::id();
 
         $notifications = Notification::where('UserID', $userId)
-            ->orderBy('created_at', 'desc') 
+            ->orderBy('created_at', 'desc')
             ->take(50) // Giới hạn 50 tin mới nhất
             ->get();
 
@@ -50,9 +50,30 @@ class NotificationController extends Controller
 
         return response()->json(['message' => 'Đã xóa thông báo'], 200);
     }
-    public function destroyAll()
+    public function deleteAllRead(Request $request)
     {
-        Notification::query()->delete();
-        return response()->json(['message' => 'Đã xóa toàn bộ lịch sử thông báo']);
+        $user = Auth::user();
+
+        // Kiểm tra chính xác UserID đang thực hiện yêu cầu
+        $query = Notification::where('UserID', $user->UserID)
+            ->where('Status', 'Read');
+
+        $count = $query->count();
+
+        if ($count === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "UserID {$user->UserID} hiện không có thông báo nào trạng thái 'Read' để xóa.",
+                'debug_db_status' => 'Hãy kiểm tra xem bạn có đang đăng nhập đúng UserID 15 không?'
+            ], 200); // Trả về 200 thay vì 404 để dễ phân biệt lỗi hệ thống
+        }
+
+        $query->delete();
+
+        return response()->json([
+            'success' => true,
+            // Đã sửa: dùng $count thay vì $query để hiện số lượng
+            'message' => "Đã xóa thành công $count thông báo đã đọc."
+        ]);
     }
 }

@@ -28,7 +28,7 @@ class SendAppointmentReminders extends Command
     {
         $tomorrow = Carbon::tomorrow();
         $appointments = Appointment::whereDate('StartTime', $tomorrow)
-            ->where('Status', ['Confirmed', 'Pending'])
+            ->whereIn('Status', ['Confirmed', 'Pending'])
             ->with(['doctor.user', 'patient'])
             ->get();
         $count = 0;
@@ -39,6 +39,7 @@ class SendAppointmentReminders extends Command
             $content = "Bạn có lịch khám với BS.$doctorName vào lúc $time ngày mai.";
             $exists = Notification::where('UserID', $appt->PatientID)
                 ->where('Content', $content)
+                ->where('NotificationType', 'Reminder')
                 ->exists();
             if (!$exists) {
                 Notification::create([

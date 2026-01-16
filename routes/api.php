@@ -141,9 +141,10 @@ Route::middleware('auth:sanctum')->group(function () {
     //Xem thông báo
     Route::get('/my-notifications', [NotificationController::class, 'getMyNotifications']);
     //đã đọc
+    Route::delete('/notifications/read', [NotificationController::class, 'deleteAllRead']);
     Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
-    Route::delete('/notifications/delete-all', [NotificationController::class, 'destroyAll']);
+    Route::post('/user/change-password', [AuthController::class, 'changePassword']);
 
     // BÁC SĨ   
     Route::middleware('role:BacSi')->prefix('doctor')->group(function () {
@@ -224,6 +225,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/notifications', [AdminNotificationController::class, 'index']);
         Route::post('/notifications/send', [AdminNotificationController::class, 'send']);
         Route::delete('/notifications/{id}', [AdminNotificationController::class, 'destroy']);
+        Route::delete('/notifications/delete-all', [AdminNotificationController::class, 'destroyAll']);
         Route::post(
             '/notifications/trigger-reminders',
             [AdminNotificationController::class, 'triggerReminders']
